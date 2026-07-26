@@ -344,9 +344,8 @@ for name, (model, param_grid) in reg_models.items():
 for name, (model, param_grid) in clf_models.items():
     print(f"Training {name} (in-play classification)...")
     if name == 'IFX-XGBoost':
-        model = IFX_XGBoost(random_state=42, n_iterations=3,
-                            objective='multi:softprob', num_class=3)
-        model.fit(X_snap_train, y_snap_train_cls, X_snap_val, y_snap_val_cls)
+        model = IFX_XGBoost(random_state=42, n_iterations=3)
+        model.fit(X_pre_train, y_pre_train_cls, X_pre_val, y_pre_val_cls)
         best_model = model
     else:
         pipe = create_clf_pipeline(model, use_pf_smote=True, scaler=True)
@@ -367,7 +366,7 @@ for name, (model, param_grid) in reg_models.items():
     print(f"Training {name} (in-play regression)...")
     if name == 'IFX-XGBoost':
         model = IFX_XGBoost(random_state=42, n_iterations=3, objective='reg:squarederror')
-        model.fit(X_snap_train, y_snap_train_reg, X_snap_val, y_snap_val_reg)
+        model.fit(X_pre_train, y_pre_train_reg, X_pre_val, y_pre_val_reg)
         best_model = model
     else:
         pipe = Pipeline([('scaler', StandardScaler()), ('reg', model)])
