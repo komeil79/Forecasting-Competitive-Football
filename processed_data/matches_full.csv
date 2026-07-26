@@ -1,0 +1,1286 @@
+match_id,competition_id,match_date,home_team_name,away_team_name,home_score,away_score,result,goal_diff
+9880,11,2018-04-14,Barcelona,Valencia,2,1,H,1
+9912,11,2018-04-29,RC Deportivo La Coruña,Barcelona,2,4,A,-2
+9924,11,2018-05-06,Barcelona,Real Madrid,2,2,D,0
+9855,11,2018-03-18,Barcelona,Athletic Club,2,0,H,2
+9827,11,2018-03-01,Las Palmas,Barcelona,1,1,D,0
+9799,11,2018-02-17,Eibar,Barcelona,0,2,A,-2
+9636,11,2017-10-01,Barcelona,Las Palmas,3,0,H,3
+9609,11,2017-09-19,Barcelona,Eibar,6,1,H,5
+9575,11,2017-08-20,Barcelona,Real Betis,2,0,H,2
+9928,11,2018-05-09,Barcelona,Villarreal,5,1,H,4
+9736,11,2017-12-23,Real Madrid,Barcelona,0,3,A,-3
+9742,11,2018-01-07,Barcelona,Levante UD,3,0,H,3
+9765,11,2018-01-21,Real Betis,Barcelona,0,5,A,-5
+9661,11,2017-10-28,Athletic Club,Barcelona,0,2,A,-2
+9592,11,2017-09-09,Barcelona,Espanyol,5,0,H,5
+9870,11,2018-04-07,Barcelona,Leganés,3,1,H,2
+9783,11,2018-02-04,Espanyol,Barcelona,1,1,D,0
+9700,11,2017-12-02,Barcelona,Celta Vigo,2,2,D,0
+9860,11,2018-03-31,Sevilla,Barcelona,2,2,D,0
+9695,11,2017-11-26,Valencia,Barcelona,1,1,D,0
+9794,11,2018-02-11,Barcelona,Getafe,0,0,D,0
+9717,11,2017-12-10,Villarreal,Barcelona,0,2,A,-2
+9673,11,2017-11-04,Barcelona,Sevilla,2,1,H,1
+9650,11,2017-10-21,Barcelona,Málaga,2,0,H,2
+9620,11,2017-09-23,Girona,Barcelona,0,3,A,-3
+9837,11,2018-03-04,Barcelona,Atlético Madrid,1,0,H,1
+9811,11,2018-02-24,Barcelona,Girona,6,1,H,5
+9642,11,2017-10-14,Atlético Madrid,Barcelona,1,1,D,0
+9774,11,2018-01-28,Barcelona,Deportivo Alavés,2,1,H,1
+9602,11,2017-09-16,Getafe,Barcelona,1,2,A,-1
+9948,11,2018-05-20,Barcelona,Real Sociedad,1,0,H,1
+9682,11,2017-11-18,Leganés,Barcelona,0,3,A,-3
+9581,11,2017-08-26,Deportivo Alavés,Barcelona,0,2,A,-2
+9726,11,2017-12-17,Barcelona,RC Deportivo La Coruña,4,0,H,4
+9754,11,2018-01-14,Real Sociedad,Barcelona,2,4,A,-2
+9889,11,2018-04-17,Celta Vigo,Barcelona,2,2,D,0
+267569,11,2017-04-23,Real Madrid,Barcelona,2,3,A,-1
+266989,11,2016-11-06,Sevilla,Barcelona,1,2,A,-1
+266357,11,2016-12-10,Osasuna,Barcelona,0,3,A,-3
+267212,11,2016-09-17,Leganés,Barcelona,1,5,A,-4
+266669,11,2016-09-10,Barcelona,Deportivo Alavés,1,2,A,-1
+266892,11,2016-08-28,Athletic Club,Barcelona,0,1,A,-1
+267220,11,2016-09-21,Barcelona,Atlético Madrid,1,1,D,0
+267670,11,2016-08-20,Barcelona,Real Betis,6,2,H,4
+266516,11,2017-01-29,Real Betis,Barcelona,1,1,D,0
+267039,11,2017-05-14,Las Palmas,Barcelona,1,4,A,-3
+266477,11,2017-01-08,Villarreal,Barcelona,1,1,D,0
+267101,11,2017-04-26,Barcelona,Osasuna,7,1,H,5
+266440,11,2017-03-19,Barcelona,Valencia,4,2,H,2
+266033,11,2016-10-22,Valencia,Barcelona,2,3,A,-1
+267660,11,2017-03-12,RC Deportivo La Coruña,Barcelona,2,1,H,1
+266273,11,2017-02-11,Deportivo Alavés,Barcelona,0,6,A,-5
+267395,11,2017-01-14,Barcelona,Las Palmas,5,0,H,5
+266874,11,2017-02-04,Barcelona,Athletic Club,3,0,H,3
+266731,11,2017-01-22,Eibar,Barcelona,0,4,A,-4
+266528,11,2016-12-18,Barcelona,Espanyol,4,1,H,3
+266280,11,2017-04-05,Barcelona,Sevilla,3,0,H,3
+267432,11,2017-05-21,Barcelona,Eibar,4,2,H,2
+267076,11,2016-12-03,Barcelona,Real Madrid,1,1,D,0
+267590,11,2017-04-08,Málaga,Barcelona,2,0,H,2
+267373,11,2017-04-15,Barcelona,Real Sociedad,3,2,H,1
+267077,11,2017-04-29,Espanyol,Barcelona,0,3,A,-3
+266952,11,2017-05-06,Barcelona,Villarreal,4,1,H,3
+267464,11,2017-02-26,Atlético Madrid,Barcelona,1,2,A,-1
+266299,11,2017-03-04,Barcelona,Celta Vigo,5,0,H,5
+266191,11,2016-11-27,Real Sociedad,Barcelona,1,1,D,0
+265952,11,2017-03-01,Barcelona,Sporting Gijón,6,1,H,5
+267492,11,2016-10-15,Barcelona,RC Deportivo La Coruña,4,0,H,4
+267596,11,2017-02-19,Barcelona,Leganés,2,1,H,1
+267058,11,2016-10-29,Barcelona,Granada,1,0,H,1
+69238,11,2010-02-27,Barcelona,Málaga,2,1,H,1
+69243,11,2010-01-16,Barcelona,Sevilla,4,0,H,4
+69241,11,2010-05-04,Barcelona,Tenerife,4,1,H,3
+69239,11,2010-05-08,Sevilla,Barcelona,2,3,A,-1
+69257,11,2010-03-24,Barcelona,Osasuna,2,0,H,2
+69253,11,2009-10-25,Barcelona,Real Zaragoza,6,1,H,5
+69244,11,2010-05-01,Villarreal,Barcelona,1,4,A,-3
+69277,11,2009-10-31,Osasuna,Barcelona,1,1,D,0
+69229,11,2009-09-12,Getafe,Barcelona,0,2,A,-2
+69219,11,2010-01-10,Tenerife,Barcelona,0,5,A,-5
+69218,11,2009-12-05,RC Deportivo La Coruña,Barcelona,1,3,A,-2
+69250,11,2009-11-07,Barcelona,Mallorca,4,2,H,2
+69242,11,2010-05-16,Barcelona,Real Valladolid,4,0,H,4
+69256,11,2009-10-03,Barcelona,Almería,1,0,H,1
+69298,11,2010-03-27,Mallorca,Barcelona,0,1,A,-1
+69259,11,2010-04-10,Real Madrid,Barcelona,0,2,A,-2
+69224,11,2010-03-14,Barcelona,Valencia,3,0,H,3
+69210,11,2010-01-23,Real Valladolid,Barcelona,0,3,A,-3
+69220,11,2010-01-30,Sporting Gijón,Barcelona,0,1,A,-1
+69237,11,2010-02-14,Atlético Madrid,Barcelona,2,1,H,1
+69226,11,2010-03-06,Almería,Barcelona,2,2,D,0
+69252,11,2009-10-17,Valencia,Barcelona,0,0,D,0
+69255,11,2009-09-26,Málaga,Barcelona,0,2,A,-2
+69214,11,2010-04-24,Barcelona,Xerez,3,1,H,2
+69262,11,2009-11-29,Barcelona,Real Madrid,1,0,H,1
+69240,11,2010-02-06,Barcelona,Getafe,2,1,H,1
+69233,11,2010-02-20,Barcelona,Racing Santander,4,0,H,4
+69213,11,2010-04-17,Espanyol,Barcelona,0,0,D,0
+69267,11,2009-12-02,Xerez,Barcelona,0,2,A,-2
+69288,11,2009-11-21,Athletic Club,Barcelona,1,1,D,0
+69254,11,2009-09-22,Racing Santander,Barcelona,1,4,A,-3
+69292,11,2009-09-19,Barcelona,Atlético Madrid,5,2,H,3
+69227,11,2010-03-21,Real Zaragoza,Barcelona,2,4,A,-2
+69247,11,2010-04-03,Barcelona,Athletic Club,4,1,H,3
+69221,11,2010-04-14,Barcelona,RC Deportivo La Coruña,3,0,H,3
+69276,11,2011-02-05,Barcelona,Atlético Madrid,3,0,H,3
+69304,11,2011-04-02,Villarreal,Barcelona,0,1,A,-1
+69307,11,2010-12-04,Osasuna,Barcelona,0,3,A,-3
+69271,11,2011-04-23,Barcelona,Osasuna,2,0,H,2
+69305,11,2011-04-09,Barcelona,Almería,3,1,H,2
+69278,11,2011-01-16,Barcelona,Málaga,4,1,H,3
+69275,11,2010-12-18,Espanyol,Barcelona,1,5,A,-4
+69295,11,2011-01-22,Barcelona,Racing Santander,3,0,H,3
+69270,11,2010-11-07,Getafe,Barcelona,1,3,A,-2
+69303,11,2011-03-19,Barcelona,Getafe,2,1,H,1
+69245,11,2011-04-16,Real Madrid,Barcelona,1,1,D,0
+69287,11,2010-09-11,Barcelona,Hércules,0,2,A,-2
+69296,11,2011-01-29,Hércules,Barcelona,0,3,A,-3
+69260,11,2010-10-16,Barcelona,Valencia,2,1,H,1
+69269,11,2010-09-19,Atlético Madrid,Barcelona,1,2,A,-1
+69246,11,2011-04-30,Real Sociedad,Barcelona,2,1,H,1
+69302,11,2010-12-12,Barcelona,Real Sociedad,5,0,H,5
+69282,11,2011-02-20,Barcelona,Athletic Club,2,1,H,1
+69274,11,2011-03-02,Valencia,Barcelona,0,1,A,-1
+69283,11,2011-02-26,Mallorca,Barcelona,0,3,A,-3
+69280,11,2011-01-08,RC Deportivo La Coruña,Barcelona,0,4,A,-4
+69286,11,2010-08-29,Racing Santander,Barcelona,0,3,A,-3
+69291,11,2011-03-13,Sevilla,Barcelona,1,1,D,0
+69236,11,2010-10-03,Barcelona,Mallorca,1,1,D,0
+69234,11,2011-05-08,Barcelona,Espanyol,2,0,H,2
+69272,11,2011-05-11,Levante UD,Barcelona,1,1,D,0
+69308,11,2010-11-13,Barcelona,Villarreal,3,1,H,2
+69299,11,2010-11-29,Barcelona,Real Madrid,5,0,H,5
+69300,11,2011-03-05,Barcelona,Real Zaragoza,1,0,H,1
+69289,11,2010-10-30,Barcelona,Sevilla,5,0,H,5
+69263,11,2010-10-23,Real Zaragoza,Barcelona,0,2,A,-2
+69306,11,2010-11-20,Almería,Barcelona,0,8,A,-5
+69248,11,2011-02-12,Sporting Gijón,Barcelona,1,1,D,0
+70220,11,2011-09-17,Barcelona,Osasuna,8,0,H,5
+69328,11,2012-02-19,Barcelona,Valencia,5,1,H,4
+69329,11,2011-10-22,Barcelona,Sevilla,0,0,D,0
+70219,11,2012-04-07,Real Zaragoza,Barcelona,1,4,A,-3
+69331,11,2011-11-19,Barcelona,Real Zaragoza,4,0,H,4
+69337,11,2012-02-26,Atlético Madrid,Barcelona,1,2,A,-1
+69322,11,2012-03-11,Racing Santander,Barcelona,0,2,A,-2
+69316,11,2012-02-04,Barcelona,Real Sociedad,2,1,H,1
+69332,11,2011-11-29,Barcelona,Rayo Vallecano,4,0,H,4
+69335,11,2012-01-22,Málaga,Barcelona,1,4,A,-3
+69330,11,2011-11-06,Athletic Club,Barcelona,2,2,D,0
+69297,11,2011-09-24,Barcelona,Atlético Madrid,5,0,H,5
+69325,11,2012-03-24,Mallorca,Barcelona,0,2,A,-2
+69324,11,2012-04-21,Barcelona,Real Madrid,1,2,A,-1
+70225,11,2012-03-20,Barcelona,Granada,5,3,H,2
+69293,11,2011-10-15,Barcelona,Racing Santander,3,0,H,3
+70223,11,2011-09-21,Valencia,Barcelona,2,2,D,0
+69333,11,2011-12-03,Barcelona,Levante UD,5,0,H,5
+69264,11,2011-09-10,Real Sociedad,Barcelona,2,2,D,0
+69343,11,2012-04-10,Barcelona,Getafe,4,0,H,4
+69340,11,2012-05-02,Barcelona,Málaga,4,1,H,3
+69265,11,2011-10-02,Sporting Gijón,Barcelona,0,1,A,-1
+69319,11,2012-05-12,Real Betis,Barcelona,2,2,D,0
+69334,11,2011-12-10,Real Madrid,Barcelona,1,3,A,-2
+69327,11,2012-01-15,Barcelona,Real Betis,4,2,H,2
+69315,11,2011-11-26,Getafe,Barcelona,1,0,H,1
+69336,11,2012-02-11,Osasuna,Barcelona,3,2,H,1
+69326,11,2012-03-17,Sevilla,Barcelona,0,2,A,-2
+69268,11,2011-08-29,Barcelona,Villarreal,5,0,H,5
+69320,11,2012-05-05,Barcelona,Espanyol,4,0,H,4
+69312,11,2012-01-08,Espanyol,Barcelona,1,1,D,0
+69314,11,2011-10-29,Barcelona,Mallorca,5,0,H,5
+69318,11,2011-10-25,Granada,Barcelona,0,1,A,-1
+69338,11,2012-01-28,Villarreal,Barcelona,0,0,D,0
+70224,11,2012-04-29,Rayo Vallecano,Barcelona,0,7,A,-5
+70221,11,2012-04-14,Levante UD,Barcelona,1,2,A,-1
+69323,11,2012-03-31,Barcelona,Athletic Club,2,0,H,2
+70263,11,2012-12-01,Barcelona,Athletic Club,5,1,H,4
+266015,11,2012-12-22,Real Valladolid,Barcelona,1,3,A,-2
+70270,11,2012-09-22,Barcelona,Granada,2,0,H,2
+70281,11,2013-05-05,Barcelona,Real Betis,4,2,H,2
+70308,11,2012-11-03,Barcelona,Celta Vigo,3,1,H,2
+70282,11,2013-02-03,Valencia,Barcelona,1,1,D,0
+266724,11,2012-11-11,Mallorca,Barcelona,2,4,A,-2
+70272,11,2013-03-02,Real Madrid,Barcelona,2,1,H,1
+70304,11,2012-10-20,RC Deportivo La Coruña,Barcelona,4,5,A,-1
+70280,11,2012-11-25,Levante UD,Barcelona,0,4,A,-4
+70296,11,2012-12-16,Barcelona,Atlético Madrid,4,1,H,3
+70297,11,2013-02-10,Barcelona,Getafe,6,1,H,5
+266433,11,2013-01-06,Barcelona,Espanyol,4,0,H,4
+70256,11,2013-03-30,Celta Vigo,Barcelona,2,2,D,0
+70259,11,2012-08-19,Barcelona,Real Sociedad,5,1,H,4
+70260,11,2013-01-27,Barcelona,Osasuna,5,1,H,4
+70276,11,2012-10-27,Rayo Vallecano,Barcelona,0,5,A,-5
+70287,11,2013-01-19,Real Sociedad,Barcelona,3,2,H,1
+70284,11,2013-05-12,Atlético Madrid,Barcelona,1,2,A,-1
+70275,11,2012-09-29,Sevilla,Barcelona,2,3,A,-1
+70286,11,2012-09-02,Barcelona,Valencia,1,0,H,1
+70309,11,2012-11-17,Barcelona,Real Zaragoza,3,1,H,2
+70300,11,2012-10-07,Barcelona,Real Madrid,2,2,D,0
+70295,11,2012-12-09,Real Betis,Barcelona,1,2,A,-1
+70307,11,2013-03-17,Barcelona,Rayo Vallecano,3,1,H,2
+70305,11,2013-03-09,Barcelona,RC Deportivo La Coruña,2,0,H,2
+266827,11,2013-01-13,Málaga,Barcelona,1,3,A,-2
+267502,11,2013-04-27,Athletic Club,Barcelona,2,2,D,0
+70271,11,2013-02-23,Barcelona,Sevilla,2,1,H,1
+70294,11,2013-02-16,Granada,Barcelona,1,2,A,-1
+70262,11,2012-08-26,Osasuna,Barcelona,1,2,A,-1
+70292,11,2012-09-15,Getafe,Barcelona,1,4,A,-3
+266066,11,2014-03-02,Barcelona,Almería,4,1,H,3
+267368,11,2014-04-05,Barcelona,Real Betis,3,1,H,2
+70301,11,2013-09-14,Barcelona,Sevilla,3,2,H,1
+70298,11,2013-09-01,Valencia,Barcelona,2,3,A,-1
+70302,11,2013-09-21,Rayo Vallecano,Barcelona,0,4,A,-4
+70291,11,2014-01-26,Barcelona,Málaga,3,0,H,3
+267138,11,2014-04-12,Granada,Barcelona,1,0,H,1
+267520,11,2013-09-24,Barcelona,Real Sociedad,4,1,H,3
+70289,11,2014-04-27,Villarreal,Barcelona,2,3,A,-1
+267675,11,2014-02-09,Sevilla,Barcelona,1,4,A,-3
+70288,11,2014-01-19,Levante UD,Barcelona,1,1,D,0
+266074,11,2014-03-16,Barcelona,Osasuna,7,0,H,5
+267567,11,2014-04-20,Barcelona,Athletic Club,2,1,H,1
+266201,11,2014-05-11,Elche,Barcelona,0,0,D,0
+266274,11,2014-03-26,Barcelona,Celta Vigo,3,0,H,3
+70293,11,2013-10-26,Barcelona,Real Madrid,2,1,H,1
+265918,11,2014-02-15,Barcelona,Rayo Vallecano,6,0,H,5
+70277,11,2013-08-18,Barcelona,Levante UD,7,0,H,5
+70283,11,2013-11-01,Barcelona,Espanyol,1,0,H,1
+70306,11,2014-03-29,Espanyol,Barcelona,0,1,A,-1
+266256,11,2014-05-17,Barcelona,Atlético Madrid,1,1,D,0
+266613,11,2014-02-01,Barcelona,Valencia,2,3,A,-1
+266491,11,2014-05-03,Barcelona,Getafe,2,2,D,0
+265830,11,2014-01-11,Atlético Madrid,Barcelona,0,0,D,0
+265857,11,2014-03-23,Real Madrid,Barcelona,3,4,A,-1
+266883,11,2013-11-10,Real Betis,Barcelona,1,4,A,-3
+266603,11,2014-03-08,Real Valladolid,Barcelona,1,0,H,1
+265837,11,2014-02-22,Real Sociedad,Barcelona,3,1,H,2
+266462,11,2013-10-19,Osasuna,Barcelona,0,0,D,0
+267192,11,2013-10-29,Celta Vigo,Barcelona,0,3,A,-3
+266420,11,2013-09-28,Almería,Barcelona,0,2,A,-2
+267183,11,2015-03-22,Barcelona,Real Madrid,2,1,H,1
+265835,11,2014-11-22,Barcelona,Sevilla,5,1,H,4
+266838,11,2014-09-24,Málaga,Barcelona,0,0,D,0
+265963,11,2015-04-28,Barcelona,Getafe,6,0,H,5
+266117,11,2014-09-27,Barcelona,Granada,6,0,H,5
+266916,11,2015-03-08,Barcelona,Rayo Vallecano,6,1,H,5
+267197,11,2015-05-23,Barcelona,RC Deportivo La Coruña,2,2,D,0
+70264,11,2014-12-13,Getafe,Barcelona,0,0,D,0
+70273,11,2014-09-13,Barcelona,Athletic Club,2,0,H,2
+267301,11,2014-11-01,Barcelona,Celta Vigo,0,1,A,-1
+265896,11,2014-10-18,Barcelona,Eibar,3,0,H,3
+265866,11,2015-05-02,Córdoba CF,Barcelona,0,8,A,-5
+267400,11,2015-04-08,Barcelona,Almería,4,0,H,4
+266406,11,2014-08-31,Villarreal,Barcelona,0,1,A,-1
+267085,11,2014-10-25,Real Madrid,Barcelona,3,1,H,2
+267561,11,2014-10-04,Rayo Vallecano,Barcelona,0,2,A,-2
+266148,11,2015-02-21,Barcelona,Málaga,0,1,A,-1
+266045,11,2015-05-09,Barcelona,Real Sociedad,2,0,H,2
+70303,11,2015-01-11,Barcelona,Atlético Madrid,3,1,H,2
+266240,11,2015-01-04,Real Sociedad,Barcelona,1,0,H,1
+267597,11,2015-02-01,Barcelona,Villarreal,3,2,H,1
+266794,11,2015-01-24,Elche,Barcelona,0,6,A,-5
+267343,11,2015-02-28,Granada,Barcelona,1,3,A,-2
+266631,11,2015-05-17,Atlético Madrid,Barcelona,0,1,A,-1
+266320,11,2014-12-07,Barcelona,Espanyol,5,1,H,4
+266230,11,2015-01-18,RC Deportivo La Coruña,Barcelona,0,4,A,-4
+266525,11,2015-04-18,Barcelona,Valencia,2,0,H,2
+266560,11,2014-11-30,Valencia,Barcelona,0,1,A,-1
+266846,11,2014-12-20,Barcelona,Córdoba CF,5,0,H,5
+266531,11,2015-04-25,Espanyol,Barcelona,0,2,A,-2
+266921,11,2014-08-24,Barcelona,Elche,3,0,H,3
+267499,11,2014-11-08,Almería,Barcelona,1,2,A,-1
+266741,11,2015-02-15,Barcelona,Levante UD,5,0,H,5
+266871,11,2015-02-08,Athletic Club,Barcelona,2,5,A,-3
+266967,11,2015-03-14,Eibar,Barcelona,0,2,A,-2
+266929,11,2015-04-05,Celta Vigo,Barcelona,0,1,A,-1
+266770,11,2014-09-21,Levante UD,Barcelona,0,5,A,-5
+266142,11,2015-04-11,Sevilla,Barcelona,2,2,D,0
+3825739,11,2016-01-17,Real Madrid,Sporting Gijón,5,1,H,4
+3825848,11,2015-09-23,Levante UD,Eibar,2,2,D,0
+3825895,11,2015-09-23,Las Palmas,Sevilla,2,0,H,2
+3825894,11,2016-05-01,RC Deportivo La Coruña,Getafe,0,2,A,-2
+3825855,11,2016-05-02,Málaga,Levante UD,3,1,H,2
+3825908,11,2016-05-15,Espanyol,Eibar,4,2,H,2
+3825883,11,2016-05-15,Málaga,Las Palmas,4,1,H,3
+3825900,11,2016-05-15,Sporting Gijón,Villarreal,2,0,H,2
+3825902,11,2016-05-15,Rayo Vallecano,Levante UD,3,1,H,2
+3825876,11,2016-05-15,Real Betis,Getafe,2,1,H,1
+3825846,11,2016-05-14,RC Deportivo La Coruña,Real Madrid,0,2,A,-2
+3825869,11,2016-05-14,Athletic Club,Sevilla,3,1,H,2
+3825882,11,2016-05-14,Atlético Madrid,Celta Vigo,2,0,H,2
+3825849,11,2016-05-13,Valencia,Real Sociedad,0,1,A,-1
+3825860,11,2016-05-08,Levante UD,Atlético Madrid,2,1,H,1
+3825847,11,2016-04-23,Eibar,RC Deportivo La Coruña,1,1,D,0
+3825817,11,2016-03-18,Getafe,Eibar,1,1,D,0
+3825778,11,2016-02-20,Real Betis,Sporting Gijón,1,1,D,0
+3825777,11,2016-02-19,Levante UD,Getafe,3,0,H,3
+3825740,11,2016-01-18,Eibar,Granada,5,1,H,4
+3825875,11,2016-04-24,Villarreal,Real Sociedad,0,0,D,0
+3825884,11,2016-04-24,Sevilla,Real Betis,2,0,H,2
+3825842,11,2016-04-24,Levante UD,Athletic Club,2,2,D,0
+3825890,11,2016-04-23,Atlético Madrid,Málaga,1,0,H,1
+3825871,11,2016-04-22,Las Palmas,Espanyol,4,0,H,4
+3825896,11,2016-04-21,Granada,Levante UD,5,1,H,4
+3825841,11,2016-04-21,Real Sociedad,Getafe,1,2,A,-1
+3825843,11,2016-04-20,Málaga,Rayo Vallecano,1,1,D,0
+3825839,11,2016-04-20,Sporting Gijón,Sevilla,2,1,H,1
+3825838,11,2016-04-20,Athletic Club,Atlético Madrid,0,1,A,-1
+3825840,11,2016-04-20,Valencia,Eibar,4,0,H,4
+3825837,11,2016-04-19,Real Betis,Las Palmas,1,0,H,1
+3825836,11,2016-04-17,Rayo Vallecano,Villarreal,2,1,H,1
+3825835,11,2016-04-17,Málaga,Athletic Club,0,1,A,-1
+3825834,11,2016-04-17,Atlético Madrid,Granada,3,0,H,3
+3825906,11,2016-04-17,Sevilla,RC Deportivo La Coruña,1,1,D,0
+3825897,11,2016-04-16,Eibar,Real Sociedad,2,1,H,1
+3825889,11,2016-04-16,Celta Vigo,Real Betis,1,1,D,0
+3825833,11,2016-04-16,Getafe,Real Madrid,1,5,A,-4
+3825857,11,2016-04-15,Levante UD,Espanyol,2,1,H,1
+3825863,11,2016-04-11,RC Deportivo La Coruña,Las Palmas,1,3,A,-2
+3825829,11,2016-04-10,Athletic Club,Rayo Vallecano,1,0,H,1
+3825830,11,2016-04-10,Villarreal,Getafe,2,0,H,2
+3825832,11,2016-04-10,Sporting Gijón,Celta Vigo,0,1,A,-1
+3825831,11,2016-04-10,Valencia,Sevilla,2,1,H,1
+3825828,11,2016-04-09,Espanyol,Atlético Madrid,1,3,A,-2
+3825827,11,2016-04-09,Real Betis,Levante UD,1,0,H,1
+3825826,11,2016-04-08,Granada,Málaga,0,0,D,0
+3825825,11,2016-04-04,Levante UD,Sporting Gijón,0,0,D,0
+3825824,11,2016-04-03,Eibar,Villarreal,1,2,A,-1
+3825823,11,2016-04-03,Sevilla,Real Sociedad,1,2,A,-1
+3825905,11,2016-04-03,Málaga,Espanyol,1,1,D,0
+3825822,11,2016-04-02,Las Palmas,Valencia,2,1,H,1
+3825821,11,2016-03-20,Espanyol,Athletic Club,2,1,H,1
+3825820,11,2016-03-20,Real Madrid,Sevilla,4,0,H,4
+3825819,11,2016-03-20,Valencia,Celta Vigo,0,2,A,-2
+3825818,11,2016-03-19,Real Sociedad,Las Palmas,0,1,A,-1
+3825887,11,2016-03-19,Granada,Rayo Vallecano,2,2,D,0
+3825907,11,2016-03-19,Sporting Gijón,Atlético Madrid,2,1,H,1
+3825903,11,2016-03-19,Real Betis,Málaga,0,1,A,-1
+3825816,11,2016-03-13,Sevilla,Villarreal,4,2,H,2
+3825815,11,2016-03-13,Levante UD,Valencia,1,0,H,1
+3825858,11,2016-03-12,Rayo Vallecano,Eibar,1,1,D,0
+3825813,11,2016-03-12,Atlético Madrid,RC Deportivo La Coruña,3,0,H,3
+3825814,11,2016-03-12,Celta Vigo,Real Sociedad,1,0,H,1
+3825812,11,2016-03-11,Málaga,Sporting Gijón,1,0,H,1
+3825811,11,2016-03-07,Espanyol,Rayo Vallecano,2,1,H,1
+3825807,11,2016-03-06,Valencia,Atlético Madrid,1,3,A,-2
+3825809,11,2016-03-06,Real Betis,Granada,2,0,H,2
+3825810,11,2016-03-06,Real Sociedad,Levante UD,1,1,D,0
+3825808,11,2016-03-06,Sporting Gijón,Athletic Club,0,2,A,-2
+3825804,11,2016-03-05,RC Deportivo La Coruña,Málaga,3,3,D,0
+3825867,11,2016-03-05,Getafe,Sevilla,1,1,D,0
+3825805,11,2016-03-05,Villarreal,Las Palmas,0,1,A,-1
+3825784,11,2016-02-21,Atlético Madrid,Villarreal,0,0,D,0
+3825782,11,2016-02-21,Granada,Valencia,1,2,A,-1
+3825757,11,2016-01-31,Real Madrid,Espanyol,6,0,H,5
+3825641,11,2015-10-26,Athletic Club,Sporting Gijón,3,0,H,3
+3825803,11,2016-03-03,Granada,Sporting Gijón,2,0,H,2
+3825800,11,2016-03-02,Celta Vigo,Villarreal,0,0,D,0
+3825801,11,2016-03-02,Sevilla,Eibar,1,0,H,1
+3825799,11,2016-03-02,Málaga,Valencia,1,2,A,-1
+3825797,11,2016-03-02,Athletic Club,RC Deportivo La Coruña,4,1,H,3
+3825798,11,2016-03-02,Levante UD,Real Madrid,1,3,A,-2
+3825796,11,2016-03-01,Las Palmas,Getafe,4,0,H,4
+3825795,11,2016-03-01,Atlético Madrid,Real Sociedad,3,0,H,3
+3825793,11,2016-02-28,Valencia,Athletic Club,0,3,A,-3
+3825792,11,2016-02-28,RC Deportivo La Coruña,Granada,0,1,A,-1
+3825794,11,2016-02-28,Villarreal,Levante UD,3,0,H,3
+3825788,11,2016-02-27,Getafe,Celta Vigo,0,1,A,-1
+3825791,11,2016-02-27,Real Betis,Rayo Vallecano,2,2,D,0
+3825790,11,2016-02-27,Sporting Gijón,Espanyol,2,4,A,-2
+3825787,11,2016-02-27,Real Madrid,Atlético Madrid,0,1,A,-1
+3825789,11,2016-02-27,Real Sociedad,Málaga,1,1,D,0
+3825786,11,2016-02-26,Eibar,Las Palmas,0,1,A,-1
+3825781,11,2016-02-21,Rayo Vallecano,Sevilla,2,2,D,0
+3825785,11,2016-02-21,Málaga,Real Madrid,1,1,D,0
+3825783,11,2016-02-21,Athletic Club,Real Sociedad,0,1,A,-1
+3825780,11,2016-02-20,Espanyol,RC Deportivo La Coruña,1,0,H,1
+3825779,11,2016-02-20,Celta Vigo,Eibar,3,2,H,1
+3825773,11,2016-02-14,Eibar,Levante UD,2,0,H,2
+3825776,11,2016-02-14,Sevilla,Las Palmas,2,0,H,2
+3825775,11,2016-02-14,Real Sociedad,Granada,3,0,H,3
+3825769,11,2016-02-13,Villarreal,Málaga,1,0,H,1
+3825770,11,2016-02-13,Real Madrid,Athletic Club,4,2,H,2
+3825768,11,2016-02-12,Sporting Gijón,Rayo Vallecano,2,2,D,0
+3825736,11,2016-01-17,Valencia,Rayo Vallecano,2,2,D,0
+3825731,11,2016-01-10,Las Palmas,Málaga,1,1,D,0
+3825685,11,2015-12-06,Sporting Gijón,Las Palmas,3,1,H,2
+3825678,11,2015-11-29,Eibar,Real Madrid,0,2,A,-2
+3825643,11,2015-10-31,Real Madrid,Las Palmas,3,1,H,2
+3825642,11,2015-10-30,RC Deportivo La Coruña,Atlético Madrid,1,1,D,0
+3825638,11,2015-10-25,Atlético Madrid,Valencia,2,1,H,1
+3825614,11,2015-10-03,Granada,RC Deportivo La Coruña,1,1,D,0
+3825612,11,2015-09-27,Getafe,Levante UD,3,0,H,3
+3825607,11,2015-09-26,Villarreal,Atlético Madrid,1,0,H,1
+3825595,11,2015-09-20,Villarreal,Athletic Club,3,1,H,2
+3825579,11,2015-08-30,Sevilla,Atlético Madrid,0,3,A,-3
+3825572,11,2015-08-29,Real Madrid,Real Betis,5,0,H,5
+3825774,11,2016-02-14,Getafe,Atlético Madrid,0,1,A,-1
+3825772,11,2016-02-13,Valencia,Espanyol,2,1,H,1
+3825771,11,2016-02-13,RC Deportivo La Coruña,Real Betis,2,2,D,0
+3825767,11,2016-02-08,Espanyol,Real Sociedad,0,5,A,-5
+3825706,11,2015-12-30,Celta Vigo,Athletic Club,0,1,A,-1
+3825712,11,2015-12-30,Getafe,RC Deportivo La Coruña,0,0,D,0
+3825708,11,2015-12-30,Levante UD,Málaga,0,1,A,-1
+3825707,11,2015-12-30,Las Palmas,Granada,4,1,H,3
+3825705,11,2015-12-30,Eibar,Sporting Gijón,2,0,H,2
+3825711,11,2015-12-30,Rayo Vallecano,Atlético Madrid,0,2,A,-2
+3825703,11,2015-12-20,Athletic Club,Levante UD,2,0,H,2
+3825700,11,2015-12-20,Real Madrid,Rayo Vallecano,10,2,H,5
+3825701,11,2015-12-20,Málaga,Atlético Madrid,1,0,H,1
+3825702,11,2015-12-20,Real Sociedad,Villarreal,0,2,A,-2
+3825704,11,2015-12-20,Granada,Celta Vigo,0,2,A,-2
+3825891,11,2015-12-19,Espanyol,Las Palmas,1,0,H,1
+3825699,11,2015-12-19,Real Betis,Sevilla,0,0,D,0
+3825697,11,2015-12-19,Valencia,Getafe,2,2,D,0
+3825698,11,2015-12-19,RC Deportivo La Coruña,Eibar,2,0,H,2
+3825694,11,2015-12-13,Eibar,Valencia,1,1,D,0
+3825693,11,2015-12-13,Atlético Madrid,Athletic Club,2,1,H,1
+3825696,11,2015-12-13,Rayo Vallecano,Málaga,1,2,A,-1
+3825695,11,2015-12-13,Villarreal,Real Madrid,1,0,H,1
+3825689,11,2015-12-12,Celta Vigo,Espanyol,1,0,H,1
+3825690,11,2015-12-12,Las Palmas,Real Betis,1,0,H,1
+3825692,11,2015-12-12,Sevilla,Sporting Gijón,2,0,H,2
+3825691,11,2015-12-12,Levante UD,Granada,1,2,A,-1
+3825688,11,2015-12-11,Getafe,Real Sociedad,1,1,D,0
+3825687,11,2015-12-07,Espanyol,Levante UD,1,1,D,0
+3825683,11,2015-12-06,Real Sociedad,Eibar,2,1,H,1
+3825686,11,2015-12-06,Athletic Club,Málaga,0,0,D,0
+3825684,11,2015-12-06,Villarreal,Rayo Vallecano,2,1,H,1
+3825681,11,2015-12-05,Real Madrid,Getafe,4,1,H,3
+3825682,11,2015-12-05,Granada,Atlético Madrid,0,2,A,-2
+3825680,11,2015-12-05,RC Deportivo La Coruña,Sevilla,1,1,D,0
+3825677,11,2015-11-29,Sevilla,Valencia,1,0,H,1
+3825675,11,2015-11-29,Rayo Vallecano,Athletic Club,0,3,A,-3
+3825676,11,2015-11-29,Getafe,Villarreal,2,0,H,2
+3825674,11,2015-11-28,Atlético Madrid,Espanyol,1,0,H,1
+3825673,11,2015-11-28,Las Palmas,RC Deportivo La Coruña,0,2,A,-2
+3825671,11,2015-11-28,Celta Vigo,Sporting Gijón,2,1,H,1
+3825672,11,2015-11-28,Málaga,Granada,2,2,D,0
+3825670,11,2015-11-27,Levante UD,Real Betis,0,1,A,-1
+3825669,11,2015-11-23,Getafe,Rayo Vallecano,1,1,D,0
+3825668,11,2015-11-22,Sporting Gijón,Levante UD,0,3,A,-3
+3825666,11,2015-11-22,Real Betis,Atlético Madrid,0,1,A,-1
+3825665,11,2015-11-22,Granada,Athletic Club,2,0,H,2
+3825667,11,2015-11-22,Villarreal,Eibar,1,1,D,0
+3825664,11,2015-11-21,Real Sociedad,Sevilla,2,0,H,2
+3825662,11,2015-11-21,RC Deportivo La Coruña,Celta Vigo,2,0,H,2
+3825888,11,2015-11-21,Valencia,Las Palmas,1,1,D,0
+3825663,11,2015-11-21,Espanyol,Málaga,2,0,H,2
+3825659,11,2015-11-08,Athletic Club,Espanyol,2,1,H,1
+3825658,11,2015-11-08,Atlético Madrid,Sporting Gijón,1,0,H,1
+3825660,11,2015-11-08,Barcelona,Villarreal,3,0,H,3
+3825661,11,2015-11-08,Sevilla,Real Madrid,3,2,H,1
+3825656,11,2015-11-07,Levante UD,RC Deportivo La Coruña,1,1,D,0
+3825657,11,2015-11-07,Málaga,Real Betis,0,1,A,-1
+3825652,11,2015-11-06,Las Palmas,Real Sociedad,2,0,H,2
+3825623,11,2015-10-17,Valencia,Málaga,3,0,H,3
+3825626,11,2015-10-17,Real Betis,Espanyol,1,3,A,-2
+3825616,11,2015-10-03,Málaga,Real Sociedad,3,1,H,2
+3825608,11,2015-09-26,Eibar,Celta Vigo,1,1,D,0
+3825601,11,2015-09-23,Rayo Vallecano,Sporting Gijón,2,1,H,1
+3825899,11,2016-04-24,Getafe,Valencia,2,2,D,0
+3825852,11,2016-04-16,Las Palmas,Sporting Gijón,1,1,D,0
+3825647,11,2015-10-31,Valencia,Levante UD,3,0,H,3
+3825637,11,2015-10-25,Barcelona,Eibar,3,1,H,2
+3825628,11,2015-10-18,Getafe,Las Palmas,4,0,H,4
+3825619,11,2015-10-04,Levante UD,Villarreal,1,0,H,1
+3825618,11,2015-10-03,Las Palmas,Eibar,0,2,A,-2
+3825611,11,2015-09-27,RC Deportivo La Coruña,Espanyol,3,0,H,3
+3825609,11,2015-09-27,Real Sociedad,Athletic Club,0,0,D,0
+3825598,11,2015-09-22,Atlético Madrid,Getafe,2,0,H,2
+3825584,11,2015-09-13,Granada,Villarreal,1,3,A,-2
+3825570,11,2015-08-24,Granada,Eibar,1,3,A,-2
+3825562,11,2015-08-21,Málaga,Sevilla,0,0,D,0
+3825904,11,2016-05-08,Eibar,Real Betis,1,1,D,0
+3825901,11,2016-05-08,Real Madrid,Valencia,3,2,H,1
+3825898,11,2016-04-02,Celta Vigo,RC Deportivo La Coruña,1,1,D,0
+3825893,11,2016-04-20,Real Madrid,Villarreal,3,0,H,3
+3825892,11,2015-09-22,Granada,Real Sociedad,0,3,A,-3
+3825886,11,2016-04-23,Rayo Vallecano,Real Madrid,2,3,A,-1
+3825885,11,2016-04-01,Rayo Vallecano,Getafe,2,0,H,2
+3825881,11,2016-03-14,Granada,Espanyol,1,1,D,0
+3825880,11,2016-03-19,RC Deportivo La Coruña,Levante UD,2,1,H,1
+3825879,11,2016-03-13,Las Palmas,Real Madrid,1,2,A,-1
+3825878,11,2016-04-30,Atlético Madrid,Rayo Vallecano,1,0,H,1
+3825877,11,2016-04-03,Athletic Club,Granada,1,1,D,0
+3825874,11,2015-10-24,Sevilla,Getafe,5,0,H,5
+3825873,11,2016-05-01,Valencia,Villarreal,0,2,A,-2
+3825872,11,2016-04-02,Atlético Madrid,Real Betis,5,1,H,4
+3825870,11,2016-05-01,Athletic Club,Celta Vigo,2,1,H,1
+3825868,11,2016-04-25,Celta Vigo,Granada,2,1,H,1
+3825866,11,2016-05-08,Las Palmas,Athletic Club,0,0,D,0
+3825865,11,2016-05-08,Getafe,Sporting Gijón,1,1,D,0
+3825864,11,2016-04-30,Real Sociedad,Real Madrid,0,1,A,-1
+3825862,11,2016-04-19,Espanyol,Celta Vigo,1,1,D,0
+3825861,11,2016-05-08,Real Sociedad,Rayo Vallecano,2,1,H,1
+3825859,11,2016-04-30,Granada,Las Palmas,3,2,H,1
+3825856,11,2016-04-09,Real Madrid,Eibar,4,0,H,4
+3825854,11,2016-04-29,Sporting Gijón,Eibar,2,0,H,2
+3825853,11,2016-05-08,Sevilla,Granada,1,4,A,-3
+3825851,11,2016-05-08,Villarreal,RC Deportivo La Coruña,0,2,A,-2
+3825850,11,2016-05-08,Celta Vigo,Málaga,1,0,H,1
+3825845,11,2016-05-01,Espanyol,Sevilla,1,0,H,1
+3825844,11,2016-03-13,Athletic Club,Real Betis,3,1,H,2
+3825806,11,2016-03-05,Real Madrid,Celta Vigo,7,1,H,5
+3825802,11,2016-03-03,Espanyol,Real Betis,0,3,A,-3
+3825679,11,2015-12-05,Real Betis,Celta Vigo,1,1,D,0
+3825655,11,2015-11-07,Rayo Vallecano,Granada,2,1,H,1
+3825654,11,2015-11-07,Celta Vigo,Valencia,1,5,A,-4
+3825653,11,2015-11-07,Eibar,Getafe,3,1,H,2
+3825651,11,2015-11-01,Espanyol,Granada,1,1,D,0
+3825650,11,2015-11-01,Real Betis,Athletic Club,1,3,A,-2
+3825649,11,2015-11-01,Sporting Gijón,Málaga,1,0,H,1
+3825648,11,2015-11-01,Eibar,Rayo Vallecano,1,0,H,1
+3825765,11,2016-02-07,Celta Vigo,Sevilla,1,1,D,0
+3825766,11,2016-02-07,Real Betis,Valencia,1,0,H,1
+3825764,11,2016-02-07,Granada,Real Madrid,1,2,A,-1
+3825760,11,2016-02-06,Atlético Madrid,Eibar,3,1,H,2
+3825763,11,2016-02-06,Rayo Vallecano,Las Palmas,2,0,H,2
+3825761,11,2016-02-06,Athletic Club,Villarreal,0,0,D,0
+3825762,11,2016-02-06,Sporting Gijón,RC Deportivo La Coruña,1,1,D,0
+3825759,11,2016-02-05,Málaga,Getafe,3,0,H,3
+3825758,11,2016-02-01,RC Deportivo La Coruña,Rayo Vallecano,2,2,D,0
+3825756,11,2016-01-31,Sevilla,Levante UD,3,1,H,2
+3825755,11,2016-01-31,Valencia,Sporting Gijón,0,1,A,-1
+3825754,11,2016-01-31,Las Palmas,Celta Vigo,2,1,H,1
+3825750,11,2016-01-30,Real Sociedad,Real Betis,2,1,H,1
+3825752,11,2016-01-30,Eibar,Málaga,1,2,A,-1
+3825751,11,2016-01-30,Getafe,Athletic Club,0,1,A,-1
+3825753,11,2016-01-30,Villarreal,Granada,1,0,H,1
+3825749,11,2016-01-25,Levante UD,Las Palmas,3,2,H,1
+3825747,11,2016-01-24,Athletic Club,Eibar,5,2,H,3
+3825748,11,2016-01-24,Atlético Madrid,Sevilla,0,0,D,0
+3825745,11,2016-01-24,RC Deportivo La Coruña,Valencia,1,1,D,0
+3825746,11,2016-01-24,Real Betis,Real Madrid,1,1,D,0
+3825743,11,2016-01-23,Rayo Vallecano,Celta Vigo,3,0,H,3
+3825744,11,2016-01-23,Espanyol,Villarreal,2,2,D,0
+3825742,11,2016-01-23,Granada,Getafe,3,2,H,1
+3825741,11,2016-01-22,Sporting Gijón,Real Sociedad,5,1,H,4
+3825738,11,2016-01-17,Las Palmas,Atlético Madrid,0,3,A,-3
+3825737,11,2016-01-17,Getafe,Espanyol,3,1,H,2
+3825734,11,2016-01-16,Real Sociedad,RC Deportivo La Coruña,1,1,D,0
+3825733,11,2016-01-16,Sevilla,Málaga,2,1,H,1
+3825732,11,2016-01-16,Celta Vigo,Levante UD,4,3,H,1
+3825735,11,2016-01-16,Villarreal,Real Betis,0,0,D,0
+3825729,11,2016-01-10,Villarreal,Sporting Gijón,2,0,H,2
+3825728,11,2016-01-10,Celta Vigo,Atlético Madrid,0,2,A,-2
+3825730,11,2016-01-10,Real Sociedad,Valencia,2,0,H,2
+3825727,11,2016-01-10,Eibar,Espanyol,2,1,H,1
+3825723,11,2016-01-09,Levante UD,Rayo Vallecano,2,1,H,1
+3825726,11,2016-01-09,Sevilla,Athletic Club,2,0,H,2
+3825725,11,2016-01-09,Getafe,Real Betis,1,0,H,1
+3825724,11,2016-01-09,Real Madrid,RC Deportivo La Coruña,5,0,H,5
+3825722,11,2016-01-04,Sporting Gijón,Getafe,1,2,A,-1
+3825716,11,2016-01-03,Rayo Vallecano,Real Sociedad,2,2,D,0
+3825719,11,2016-01-03,Athletic Club,Las Palmas,2,2,D,0
+3825720,11,2016-01-03,Real Betis,Eibar,0,4,A,-4
+3825717,11,2016-01-03,Granada,Sevilla,2,1,H,1
+3825721,11,2016-01-03,RC Deportivo La Coruña,Villarreal,1,2,A,-1
+3825718,11,2016-01-03,Valencia,Real Madrid,2,2,D,0
+3825715,11,2016-01-02,Málaga,Celta Vigo,2,0,H,2
+3825714,11,2016-01-02,Atlético Madrid,Levante UD,1,0,H,1
+3825713,11,2015-12-31,Villarreal,Valencia,1,0,H,1
+3825710,11,2015-12-30,Real Madrid,Real Sociedad,3,1,H,2
+3825709,11,2015-12-30,Sevilla,Espanyol,2,0,H,2
+3825646,11,2015-10-31,Villarreal,Sevilla,2,1,H,1
+3825645,11,2015-10-31,Getafe,Barcelona,0,2,A,-2
+3825644,11,2015-10-31,Real Sociedad,Celta Vigo,2,3,A,-1
+3825640,11,2015-10-25,Levante UD,Real Sociedad,0,4,A,-4
+3825639,11,2015-10-25,Las Palmas,Villarreal,0,0,D,0
+3825636,11,2015-10-24,Málaga,RC Deportivo La Coruña,2,0,H,2
+3825635,11,2015-10-24,Celta Vigo,Real Madrid,1,3,A,-2
+3825634,11,2015-10-24,Granada,Real Betis,1,1,D,0
+3825633,11,2015-10-23,Rayo Vallecano,Espanyol,3,0,H,3
+3825632,11,2015-10-19,Sporting Gijón,Granada,3,3,D,0
+3825631,11,2015-10-18,Real Sociedad,Atlético Madrid,0,2,A,-2
+3825630,11,2015-10-18,RC Deportivo La Coruña,Athletic Club,2,2,D,0
+3825629,11,2015-10-18,Villarreal,Celta Vigo,1,2,A,-1
+3825627,11,2015-10-17,Barcelona,Rayo Vallecano,5,2,H,3
+3825625,11,2015-10-17,Real Madrid,Levante UD,3,0,H,3
+3825624,11,2015-10-17,Eibar,Sevilla,1,1,D,0
+3825622,11,2015-10-04,Athletic Club,Valencia,3,1,H,2
+3825621,11,2015-10-04,Atlético Madrid,Real Madrid,1,1,D,0
+3825620,11,2015-10-04,Rayo Vallecano,Real Betis,0,2,A,-2
+3825617,11,2015-10-03,Sevilla,Barcelona,2,1,H,1
+3825615,11,2015-10-03,Espanyol,Sporting Gijón,1,2,A,-1
+3825613,11,2015-10-02,Celta Vigo,Getafe,0,0,D,0
+3825610,11,2015-09-27,Sporting Gijón,Real Betis,1,2,A,-1
+3825606,11,2015-09-26,Real Madrid,Málaga,0,0,D,0
+3825605,11,2015-09-26,Sevilla,Rayo Vallecano,3,2,H,1
+3825604,11,2015-09-25,Valencia,Granada,1,0,H,1
+3825603,11,2015-09-24,Real Betis,RC Deportivo La Coruña,1,2,A,-1
+3825602,11,2015-09-23,Athletic Club,Real Madrid,1,2,A,-1
+3825600,11,2015-09-23,Málaga,Villarreal,0,1,A,-1
+3825599,11,2015-09-22,Espanyol,Valencia,1,0,H,1
+3825597,11,2015-09-20,Las Palmas,Rayo Vallecano,0,1,A,-1
+3825596,11,2015-09-20,RC Deportivo La Coruña,Sporting Gijón,2,3,A,-1
+3825594,11,2015-09-20,Sevilla,Celta Vigo,1,2,A,-1
+3825593,11,2015-09-19,Eibar,Atlético Madrid,0,2,A,-2
+3825592,11,2015-09-19,Real Sociedad,Espanyol,2,3,A,-1
+3825591,11,2015-09-19,Valencia,Real Betis,0,0,D,0
+3825590,11,2015-09-19,Real Madrid,Granada,1,0,H,1
+3825589,11,2015-09-18,Getafe,Málaga,1,0,H,1
+3825588,11,2015-09-14,Rayo Vallecano,RC Deportivo La Coruña,1,3,A,-2
+3825587,11,2015-09-13,Athletic Club,Getafe,3,1,H,2
+3825586,11,2015-09-13,Málaga,Eibar,0,0,D,0
+3825585,11,2015-09-13,Celta Vigo,Las Palmas,3,3,D,0
+3825583,11,2015-09-12,Sporting Gijón,Valencia,0,1,A,-1
+3825582,11,2015-09-12,Real Betis,Real Sociedad,1,0,H,1
+3825581,11,2015-09-12,Espanyol,Real Madrid,0,6,A,-5
+3825580,11,2015-09-11,Levante UD,Sevilla,1,1,D,0
+3825578,11,2015-08-30,Eibar,Athletic Club,2,0,H,2
+3825577,11,2015-08-30,Getafe,Granada,1,2,A,-1
+3825576,11,2015-08-30,Valencia,RC Deportivo La Coruña,1,1,D,0
+3825575,11,2015-08-30,Las Palmas,Levante UD,0,0,D,0
+3825574,11,2015-08-29,Celta Vigo,Rayo Vallecano,3,0,H,3
+3825573,11,2015-08-29,Real Sociedad,Sporting Gijón,0,0,D,0
+3825571,11,2015-08-28,Villarreal,Espanyol,3,1,H,2
+3825569,11,2015-08-23,Levante UD,Celta Vigo,1,2,A,-1
+3825568,11,2015-08-23,Real Betis,Villarreal,1,1,D,0
+3825567,11,2015-08-23,Sporting Gijón,Real Madrid,0,0,D,0
+3825566,11,2015-08-22,Rayo Vallecano,Valencia,0,0,D,0
+3825565,11,2015-08-22,Espanyol,Getafe,1,0,H,1
+3825564,11,2015-08-22,RC Deportivo La Coruña,Real Sociedad,0,0,D,0
+3825563,11,2015-08-22,Atlético Madrid,Las Palmas,1,0,H,1
+266498,11,2016-03-12,Barcelona,Getafe,6,0,H,5
+266986,11,2016-04-30,Real Betis,Barcelona,0,2,A,-2
+267533,11,2016-04-02,Barcelona,Real Madrid,1,2,A,-1
+266310,11,2016-04-20,RC Deportivo La Coruña,Barcelona,0,8,A,-5
+267576,11,2016-01-30,Barcelona,Atlético Madrid,2,1,H,1
+266653,11,2016-03-03,Rayo Vallecano,Barcelona,1,5,A,-4
+265944,11,2016-04-23,Barcelona,Sporting Gijón,6,0,H,5
+265894,11,2016-01-23,Málaga,Barcelona,1,2,A,-1
+265958,11,2016-05-08,Barcelona,Espanyol,5,0,H,5
+267611,11,2015-09-26,Barcelona,Las Palmas,2,1,H,1
+267422,11,2015-08-29,Barcelona,Málaga,1,0,H,1
+266236,11,2015-08-23,Athletic Club,Barcelona,0,1,A,-1
+267274,11,2015-12-05,Valencia,Barcelona,1,1,D,0
+266961,11,2015-12-12,Barcelona,RC Deportivo La Coruña,2,2,D,0
+266885,11,2015-11-28,Barcelona,Real Sociedad,4,0,H,4
+266815,11,2016-02-17,Sporting Gijón,Barcelona,1,3,A,-2
+267506,11,2016-05-14,Granada,Barcelona,0,3,A,-3
+266664,11,2016-04-09,Real Sociedad,Barcelona,1,0,H,1
+266106,11,2016-03-20,Villarreal,Barcelona,2,2,D,0
+266670,11,2016-01-02,Espanyol,Barcelona,0,0,D,0
+266149,11,2016-01-17,Barcelona,Athletic Club,6,0,H,5
+266620,11,2016-01-09,Barcelona,Granada,4,0,H,4
+266056,11,2016-03-06,Eibar,Barcelona,0,4,A,-4
+267327,11,2015-12-30,Barcelona,Real Betis,4,0,H,4
+266166,11,2015-09-12,Atlético Madrid,Barcelona,1,2,A,-1
+266160,11,2016-02-07,Levante UD,Barcelona,0,2,A,-2
+265839,11,2016-02-28,Barcelona,Sevilla,2,1,H,1
+266424,11,2015-11-21,Real Madrid,Barcelona,0,4,A,-4
+266467,11,2015-09-23,Celta Vigo,Barcelona,4,1,H,3
+267273,11,2016-02-20,Las Palmas,Barcelona,1,2,A,-1
+266490,11,2015-09-20,Barcelona,Levante UD,4,1,H,3
+266254,11,2016-02-14,Barcelona,Celta Vigo,6,1,H,5
+266557,11,2016-04-17,Barcelona,Valencia,1,2,A,-1
+3888713,11,1974-02-17,Real Madrid,Barcelona,0,5,A,-5
+68314,11,2004-12-04,Barcelona,Málaga,4,0,H,4
+68353,11,2004-10-16,Espanyol,Barcelona,0,1,A,-1
+68316,11,2005-05-01,Barcelona,Albacete,2,0,H,2
+68313,11,2004-10-24,Barcelona,Osasuna,3,0,H,3
+68315,11,2004-12-21,Barcelona,Levante UD,2,1,H,1
+69153,11,2004-12-11,Albacete,Barcelona,1,2,A,-1
+68352,11,2005-04-17,Barcelona,Getafe,2,0,H,2
+68323,11,2005-12-20,Barcelona,Celta Vigo,2,0,H,2
+68318,11,2005-10-22,Barcelona,Osasuna,3,0,H,3
+69172,11,2006-02-18,Barcelona,Real Betis,5,1,H,4
+68322,11,2005-12-17,Cádiz,Barcelona,1,3,A,-2
+69164,11,2005-10-26,Barcelona,Málaga,2,0,H,2
+68324,11,2006-01-22,Barcelona,Deportivo Alavés,2,0,H,2
+68320,11,2005-12-04,Villarreal,Barcelona,0,2,A,-2
+68339,11,2005-11-06,Getafe,Barcelona,1,3,A,-2
+68348,11,2006-01-07,Espanyol,Barcelona,1,2,A,-1
+68354,11,2005-11-27,Barcelona,Racing Santander,4,1,H,3
+68351,11,2006-02-25,Real Zaragoza,Barcelona,0,2,A,-2
+68317,11,2005-10-01,Barcelona,Real Zaragoza,2,2,D,0
+68350,11,2006-02-05,Barcelona,Atlético Madrid,1,3,A,-2
+68325,11,2006-01-29,Mallorca,Barcelona,0,3,A,-3
+68321,11,2005-12-11,Barcelona,Sevilla,2,1,H,1
+68319,11,2005-11-19,Real Madrid,Barcelona,0,3,A,-3
+68342,11,2006-01-15,Barcelona,Athletic Club,2,1,H,1
+68336,11,2007-06-17,Gimnàstic Tarragona,Barcelona,1,5,A,-4
+69176,11,2007-05-20,Atlético Madrid,Barcelona,0,6,A,-5
+69179,11,2007-04-07,Real Zaragoza,Barcelona,1,0,H,1
+68334,11,2007-03-03,Sevilla,Barcelona,2,1,H,1
+68333,11,2007-02-25,Barcelona,Athletic Club,3,0,H,3
+68326,11,2006-08-28,Celta Vigo,Barcelona,2,3,A,-1
+69162,11,2007-05-13,Barcelona,Real Betis,1,1,D,0
+68335,11,2007-03-10,Barcelona,Real Madrid,3,3,D,0
+68332,11,2007-02-18,Valencia,Barcelona,2,1,H,1
+68330,11,2006-10-22,Real Madrid,Barcelona,2,0,H,2
+68329,11,2006-10-15,Barcelona,Sevilla,3,1,H,2
+68341,11,2007-03-17,Recreativo Huelva,Barcelona,0,4,A,-4
+69165,11,2007-06-09,Barcelona,Espanyol,2,2,D,0
+69155,11,2007-04-22,Villarreal,Barcelona,2,0,H,2
+69154,11,2007-02-11,Barcelona,Racing Santander,2,0,H,2
+69156,11,2007-04-29,Barcelona,Levante UD,1,0,H,1
+69159,11,2007-04-15,Barcelona,Mallorca,1,0,H,1
+69175,11,2007-03-31,Barcelona,RC Deportivo La Coruña,2,1,H,1
+69160,11,2007-05-05,Real Sociedad,Barcelona,0,2,A,-2
+68331,11,2006-11-12,Barcelona,Real Zaragoza,3,1,H,2
+68328,11,2006-09-24,Barcelona,Valencia,1,1,D,0
+68340,11,2006-09-17,Racing Santander,Barcelona,0,3,A,-3
+69174,11,2006-11-04,RC Deportivo La Coruña,Barcelona,1,1,D,0
+68347,11,2006-09-30,Athletic Club,Barcelona,1,3,A,-2
+68327,11,2006-09-09,Barcelona,Osasuna,3,0,H,3
+69157,11,2007-05-26,Barcelona,Getafe,1,0,H,1
+15978,11,2018-09-15,Real Sociedad,Barcelona,1,2,A,-1
+15998,11,2018-09-26,Leganés,Barcelona,2,1,H,1
+16029,11,2018-10-20,Barcelona,Sevilla,4,2,H,2
+16073,11,2018-11-24,Atlético Madrid,Barcelona,1,1,D,0
+16086,11,2018-12-08,Espanyol,Barcelona,0,4,A,-4
+16190,11,2019-02-23,Sevilla,Barcelona,2,4,A,-2
+16109,11,2018-12-22,Barcelona,Celta Vigo,2,0,H,2
+16120,11,2019-01-06,Getafe,Barcelona,1,2,A,-1
+16182,11,2019-02-16,Barcelona,Real Valladolid,1,0,H,1
+16215,11,2019-03-17,Real Betis,Barcelona,1,4,A,-3
+16173,11,2019-02-10,Athletic Club,Barcelona,0,0,D,0
+16265,11,2019-04-20,Barcelona,Real Sociedad,2,1,H,1
+15946,11,2018-08-18,Barcelona,Deportivo Alavés,3,0,H,3
+16157,11,2019-02-02,Barcelona,Valencia,2,2,D,0
+16136,11,2019-01-20,Barcelona,Leganés,3,1,H,2
+16248,11,2019-04-06,Barcelona,Atlético Madrid,2,0,H,2
+16056,11,2018-11-11,Barcelona,Real Betis,3,4,A,-1
+16289,11,2019-04-27,Barcelona,Levante UD,1,0,H,1
+16079,11,2018-12-02,Barcelona,Villarreal,2,0,H,2
+16149,11,2019-01-27,Girona,Barcelona,0,2,A,-2
+16275,11,2019-04-23,Deportivo Alavés,Barcelona,0,2,A,-2
+15973,11,2018-09-02,Barcelona,Huesca,8,2,H,5
+16317,11,2019-05-19,Eibar,Barcelona,2,2,D,0
+16131,11,2019-01-13,Barcelona,Eibar,3,0,H,3
+16205,11,2019-03-09,Barcelona,Rayo Vallecano,3,1,H,2
+16095,11,2018-12-16,Levante UD,Barcelona,0,5,A,-5
+16306,11,2019-05-12,Barcelona,Getafe,2,0,H,2
+16010,11,2018-09-29,Barcelona,Athletic Club,1,1,D,0
+15986,11,2018-09-23,Barcelona,Girona,2,2,D,0
+16240,11,2019-04-02,Villarreal,Barcelona,4,4,D,0
+16023,11,2018-10-07,Valencia,Barcelona,1,1,D,0
+16196,11,2019-03-02,Real Madrid,Barcelona,0,1,A,-1
+15956,11,2018-08-25,Real Valladolid,Barcelona,0,1,A,-1
+16231,11,2019-03-30,Barcelona,Espanyol,2,0,H,2
+69146,11,2008-02-09,Sevilla,Barcelona,1,1,D,0
+69151,11,2007-09-29,Levante UD,Barcelona,1,4,A,-3
+69144,11,2007-10-07,Barcelona,Atlético Madrid,3,0,H,3
+69169,11,2007-09-02,Barcelona,Athletic Club,3,1,H,2
+68360,11,2008-02-24,Barcelona,Levante UD,5,1,H,4
+69186,11,2008-05-17,Real Murcia CF,Barcelona,3,5,A,-2
+69180,11,2007-08-26,Racing Santander,Barcelona,0,0,D,0
+69181,11,2008-01-27,Athletic Club,Barcelona,1,1,D,0
+68365,11,2008-03-01,Atlético Madrid,Barcelona,4,2,H,2
+69178,11,2007-11-10,Getafe,Barcelona,2,0,H,2
+68364,11,2007-10-20,Villarreal,Barcelona,3,1,H,2
+69170,11,2007-12-09,Barcelona,RC Deportivo La Coruña,2,1,H,1
+68359,11,2008-04-19,Barcelona,Espanyol,0,0,D,0
+68356,11,2007-12-01,Espanyol,Barcelona,1,1,D,0
+69158,11,2007-10-28,Barcelona,Almería,2,0,H,2
+69187,11,2008-02-03,Barcelona,Osasuna,1,0,H,1
+68363,11,2007-11-01,Real Valladolid,Barcelona,1,1,D,0
+69166,11,2007-11-04,Barcelona,Real Betis,3,0,H,3
+68366,11,2008-05-11,Barcelona,Mallorca,2,3,A,-1
+69148,11,2007-09-22,Barcelona,Sevilla,2,1,H,1
+69184,11,2007-11-24,Barcelona,Recreativo Huelva,3,0,H,3
+69173,11,2008-01-20,Barcelona,Racing Santander,1,0,H,1
+69182,11,2008-02-16,Real Zaragoza,Barcelona,1,2,A,-1
+68358,11,2008-04-12,Recreativo Huelva,Barcelona,2,2,D,0
+68361,11,2008-05-07,Real Madrid,Barcelona,4,1,H,3
+69141,11,2008-05-04,Barcelona,Valencia,6,0,H,5
+69145,11,2007-12-15,Valencia,Barcelona,0,3,A,-3
+69222,11,2009-04-11,Barcelona,Recreativo Huelva,2,0,H,2
+69225,11,2008-12-13,Barcelona,Real Madrid,2,0,H,2
+69189,11,2009-01-24,Barcelona,CD Numancia de Soria,4,1,H,3
+69211,11,2008-09-27,Espanyol,Barcelona,1,2,A,-1
+69138,11,2008-09-21,Sporting Gijón,Barcelona,1,6,A,-5
+69212,11,2008-10-04,Barcelona,Atlético Madrid,6,1,H,5
+69235,11,2008-11-01,Málaga,Barcelona,1,4,A,-3
+69232,11,2008-10-25,Barcelona,Almería,5,0,H,5
+69216,11,2009-03-07,Barcelona,Athletic Club,2,0,H,2
+69209,11,2009-02-01,Racing Santander,Barcelona,1,2,A,-1
+69231,11,2009-02-08,Barcelona,Sporting Gijón,3,1,H,2
+69217,11,2009-05-10,Barcelona,Villarreal,3,3,D,0
+69273,11,2009-04-04,Real Valladolid,Barcelona,0,1,A,-1
+69223,11,2009-04-18,Getafe,Barcelona,0,1,A,-1
+69195,11,2009-02-14,Real Betis,Barcelona,2,2,D,0
+69251,11,2009-04-25,Valencia,Barcelona,2,2,D,0
+69185,11,2009-03-01,Atlético Madrid,Barcelona,4,3,H,1
+69142,11,2009-03-22,Barcelona,Málaga,6,0,H,5
+69139,11,2009-02-21,Barcelona,Espanyol,1,2,A,-1
+69171,11,2008-11-29,Sevilla,Barcelona,0,3,A,-3
+69249,11,2009-05-02,Real Madrid,Barcelona,2,6,A,-4
+69215,11,2008-09-13,Barcelona,Racing Santander,1,1,D,0
+69147,11,2008-08-31,CD Numancia de Soria,Barcelona,1,0,H,1
+69177,11,2009-03-15,Almería,Barcelona,0,2,A,-2
+69207,11,2008-09-24,Barcelona,Real Betis,3,2,H,1
+69228,11,2008-12-21,Villarreal,Barcelona,1,2,A,-1
+69183,11,2009-01-17,Barcelona,RC Deportivo La Coruña,5,0,H,5
+69279,11,2008-11-08,Barcelona,Real Valladolid,6,0,H,5
+69285,11,2008-11-16,Recreativo Huelva,Barcelona,0,2,A,-2
+69230,11,2009-01-11,Osasuna,Barcelona,2,3,A,-1
+69149,11,2008-12-06,Barcelona,Valencia,4,0,H,4
+303731,11,2020-02-22,Barcelona,Eibar,5,0,H,5
+303532,11,2020-06-16,Barcelona,Leganés,2,0,H,2
+303516,11,2020-06-27,Celta Vigo,Barcelona,2,2,D,0
+303596,11,2019-12-18,Barcelona,Real Madrid,0,0,D,0
+303430,11,2019-09-24,Barcelona,Villarreal,2,1,H,1
+303725,11,2020-07-05,Villarreal,Barcelona,1,4,A,-3
+303504,11,2019-11-02,Levante UD,Barcelona,3,1,H,2
+303451,11,2019-12-07,Barcelona,Mallorca,5,2,H,3
+303664,11,2019-12-14,Real Sociedad,Barcelona,2,2,D,0
+303682,11,2020-02-02,Barcelona,Levante UD,2,1,H,1
+303400,11,2020-01-25,Valencia,Barcelona,2,0,H,2
+303634,11,2020-07-16,Barcelona,Osasuna,1,2,A,-1
+303421,11,2020-07-19,Deportivo Alavés,Barcelona,0,5,A,-5
+303493,11,2020-06-23,Barcelona,Athletic Club,1,0,H,1
+303680,11,2020-07-11,Real Valladolid,Barcelona,0,1,A,-1
+303479,11,2020-03-07,Barcelona,Real Sociedad,1,0,H,1
+303615,11,2020-07-08,Barcelona,Espanyol,1,0,H,1
+303696,11,2020-06-30,Barcelona,Atlético Madrid,2,2,D,0
+303487,11,2019-11-09,Barcelona,Celta Vigo,4,1,H,3
+303600,11,2019-10-29,Barcelona,Real Valladolid,5,1,H,4
+303548,11,2020-06-13,Mallorca,Barcelona,0,4,A,-4
+303652,11,2020-01-04,Espanyol,Barcelona,2,2,D,0
+303674,11,2020-06-19,Sevilla,Barcelona,0,0,D,0
+303470,11,2020-03-01,Real Madrid,Barcelona,2,0,H,2
+303700,11,2019-10-19,Eibar,Barcelona,0,3,A,-3
+303707,11,2020-02-09,Real Betis,Barcelona,2,3,A,-1
+303666,11,2019-09-21,Granada,Barcelona,2,0,H,2
+303715,11,2019-11-23,Leganés,Barcelona,1,2,A,-1
+303377,11,2020-02-15,Barcelona,Getafe,2,1,H,1
+303524,11,2019-12-01,Atlético Madrid,Barcelona,0,1,A,-1
+303517,11,2019-12-21,Barcelona,Deportivo Alavés,4,1,H,3
+303610,11,2020-01-19,Barcelona,Granada,1,0,H,1
+303473,11,2019-10-06,Barcelona,Sevilla,4,0,H,4
+3773386,11,2020-10-31,Deportivo Alavés,Barcelona,1,1,D,0
+3773565,11,2021-01-09,Granada,Barcelona,0,4,A,-4
+3773457,11,2021-05-16,Barcelona,Celta Vigo,1,2,A,-1
+3773631,11,2021-02-07,Real Betis,Barcelona,2,3,A,-1
+3773665,11,2021-03-06,Osasuna,Barcelona,0,2,A,-2
+3773497,11,2021-04-10,Real Madrid,Barcelona,2,1,H,1
+3773660,11,2020-12-13,Barcelona,Levante UD,1,0,H,1
+3773593,11,2020-09-27,Barcelona,Villarreal,4,0,H,4
+3773466,11,2020-10-01,Celta Vigo,Barcelona,0,3,A,-3
+3773585,11,2020-10-24,Barcelona,Real Madrid,1,3,A,-2
+3773552,11,2021-01-03,Huesca,Barcelona,0,1,A,-1
+3773672,11,2020-10-04,Barcelona,Sevilla,1,1,D,0
+3773587,11,2020-10-17,Getafe,Barcelona,1,0,H,1
+3773656,11,2020-11-21,Atlético Madrid,Barcelona,1,0,H,1
+3773377,11,2020-12-19,Barcelona,Valencia,2,2,D,0
+3773586,11,2021-04-29,Barcelona,Granada,1,2,A,-1
+3773372,11,2021-05-08,Barcelona,Atlético Madrid,0,0,D,0
+3773387,11,2021-05-11,Levante UD,Barcelona,3,3,D,0
+3773695,11,2021-05-02,Valencia,Barcelona,2,3,A,-1
+3773369,11,2021-03-15,Barcelona,Huesca,4,1,H,3
+3773661,11,2021-04-22,Barcelona,Getafe,5,2,H,3
+3773597,11,2021-03-21,Real Sociedad,Barcelona,1,6,A,-5
+3773523,11,2020-12-16,Barcelona,Real Sociedad,2,1,H,1
+3773571,11,2020-12-22,Real Valladolid,Barcelona,0,3,A,-3
+3773428,11,2020-12-05,Cádiz,Barcelona,2,1,H,1
+3764661,11,2021-01-06,Athletic Club,Barcelona,2,3,A,-1
+3773526,11,2021-02-13,Barcelona,Deportivo Alavés,5,1,H,4
+3773474,11,2021-04-05,Barcelona,Real Valladolid,1,0,H,1
+3773625,11,2021-02-27,Sevilla,Barcelona,0,2,A,-2
+3773403,11,2021-01-31,Barcelona,Athletic Club,2,1,H,1
+3773547,11,2020-11-29,Barcelona,Osasuna,4,0,H,4
+3773415,11,2021-02-21,Barcelona,Cádiz,1,1,D,0
+3764440,11,2021-02-24,Barcelona,Elche,3,0,H,3
+3773689,11,2021-04-25,Villarreal,Barcelona,1,2,A,-1
+3773477,11,2020-11-07,Barcelona,Real Betis,5,2,H,3
+3754217,2,2015-09-19,Chelsea,Arsenal,2,0,H,2
+3754117,2,2015-12-13,Aston Villa,Arsenal,0,2,A,-2
+3754296,2,2015-12-21,Arsenal,Manchester City,2,1,H,1
+3753983,2,2015-10-31,Swansea City,Arsenal,0,3,A,-3
+3754160,2,2015-12-05,Arsenal,Sunderland,3,1,H,2
+3754129,2,2015-08-24,Arsenal,Liverpool,0,0,D,0
+3754309,2,2015-12-26,Southampton,Arsenal,4,0,H,4
+3754047,2,2015-11-29,Liverpool,Swansea City,1,0,H,1
+3754058,2,2016-01-02,Leicester City,AFC Bournemouth,0,0,D,0
+3754245,2,2015-10-17,West Bromwich Albion,Sunderland,1,0,H,1
+3754136,2,2015-12-19,Newcastle United,Aston Villa,1,1,D,0
+3754037,2,2016-04-30,Everton,AFC Bournemouth,2,1,H,1
+3754039,2,2016-02-13,Crystal Palace,Watford,1,2,A,-1
+3754041,2,2016-05-15,Arsenal,Aston Villa,4,0,H,4
+3754042,2,2016-05-15,West Bromwich Albion,Liverpool,1,1,D,0
+3754043,2,2016-03-20,Tottenham Hotspur,AFC Bournemouth,3,0,H,3
+3754045,2,2015-12-29,Leicester City,Manchester City,0,0,D,0
+3754048,2,2016-04-13,Crystal Palace,Everton,0,0,D,0
+3754049,2,2016-02-27,Leicester City,Norwich City,1,0,H,1
+3754050,2,2016-03-01,Sunderland,Crystal Palace,2,2,D,0
+3754052,2,2016-03-19,West Bromwich Albion,Norwich City,0,1,A,-1
+3754053,2,2016-03-13,Aston Villa,Tottenham Hotspur,0,2,A,-2
+3754055,2,2016-05-11,Liverpool,Chelsea,1,1,D,0
+3754226,2,2015-12-30,Sunderland,Liverpool,0,1,A,-1
+3754014,2,2015-12-26,Stoke City,Manchester United,2,0,H,2
+3754091,2,2015-10-24,Stoke City,Watford,0,2,A,-2
+3754135,2,2015-12-05,Stoke City,Manchester City,2,0,H,2
+3754293,2,2015-11-07,Stoke City,Chelsea,1,0,H,1
+3754339,2,2015-09-26,Stoke City,AFC Bournemouth,2,1,H,1
+3754146,2,2015-09-19,Stoke City,Leicester City,2,2,D,0
+3754347,2,2015-12-05,Manchester United,West Ham United,0,0,D,0
+3754255,2,2015-12-13,Liverpool,West Bromwich Albion,2,2,D,0
+3754278,2,2015-10-03,AFC Bournemouth,Watford,1,1,D,0
+3753979,2,2015-11-23,Crystal Palace,Sunderland,0,1,A,-1
+3753972,2,2015-11-21,Swansea City,AFC Bournemouth,2,2,D,0
+3753978,2,2015-09-26,Southampton,Swansea City,3,1,H,2
+3753974,2,2015-12-26,Newcastle United,Everton,0,1,A,-1
+3753993,2,2015-08-15,Sunderland,Norwich City,1,3,A,-2
+3754015,2,2015-10-25,Manchester United,Manchester City,0,0,D,0
+3754038,2,2015-11-29,Norwich City,Arsenal,1,1,D,0
+3754001,2,2015-09-26,Newcastle United,Chelsea,2,2,D,0
+3754007,2,2015-08-29,Stoke City,West Bromwich Albion,0,1,A,-1
+3754008,2,2015-09-26,Manchester United,Sunderland,3,0,H,3
+3754029,2,2015-11-02,Tottenham Hotspur,Aston Villa,3,1,H,2
+3753995,2,2015-10-03,Chelsea,Southampton,1,3,A,-2
+3753999,2,2015-10-17,Watford,Arsenal,0,3,A,-3
+3754017,2,2015-10-24,Aston Villa,Swansea City,1,2,A,-1
+3754006,2,2015-10-31,West Bromwich Albion,Leicester City,2,3,A,-1
+3754023,2,2015-08-29,AFC Bournemouth,Leicester City,1,1,D,0
+3753984,2,2015-08-29,Liverpool,West Ham United,0,3,A,-3
+3754011,2,2015-09-20,Southampton,Manchester United,2,3,A,-1
+3754010,2,2015-09-19,Newcastle United,Watford,1,2,A,-1
+3754028,2,2015-11-28,Manchester City,Southampton,3,1,H,2
+3753996,2,2015-11-21,Chelsea,Norwich City,1,0,H,1
+3754025,2,2015-12-19,Chelsea,Sunderland,3,1,H,2
+3754068,2,2015-09-19,Aston Villa,West Bromwich Albion,0,1,A,-1
+3754056,2,2015-12-28,Everton,Stoke City,3,4,A,-1
+3754040,2,2015-09-20,Liverpool,Norwich City,1,1,D,0
+3754074,2,2015-10-04,Swansea City,Tottenham Hotspur,2,2,D,0
+3754076,2,2015-10-03,Sunderland,West Ham United,2,2,D,0
+3754067,2,2015-10-17,Crystal Palace,West Ham United,1,3,A,-2
+3754079,2,2015-10-03,Manchester City,Newcastle United,6,1,H,5
+3754090,2,2015-10-31,Newcastle United,Stoke City,0,0,D,0
+3754083,2,2015-08-29,Chelsea,Crystal Palace,1,2,A,-1
+3754077,2,2015-09-19,Manchester City,West Ham United,1,2,A,-1
+3754060,2,2015-10-04,Everton,Liverpool,1,1,D,0
+3754073,2,2015-12-05,Chelsea,AFC Bournemouth,0,1,A,-1
+3754085,2,2015-12-05,Swansea City,Leicester City,0,3,A,-3
+3754051,2,2015-12-20,Watford,Liverpool,3,0,H,3
+3754093,2,2015-11-29,Tottenham Hotspur,Chelsea,0,0,D,0
+3754046,2,2015-12-07,Everton,Crystal Palace,1,1,D,0
+3754072,2,2015-12-12,Sunderland,Watford,0,1,A,-1
+3754082,2,2015-11-01,Everton,Sunderland,6,2,H,4
+3754106,2,2015-09-13,Leicester City,Aston Villa,3,2,H,1
+3754099,2,2015-10-03,Crystal Palace,West Bromwich Albion,2,0,H,2
+3754098,2,2015-10-31,Chelsea,Liverpool,1,3,A,-2
+3754057,2,2015-12-26,Tottenham Hotspur,Norwich City,3,0,H,3
+3754112,2,2015-08-09,Newcastle United,Southampton,2,2,D,0
+3754104,2,2015-08-22,Norwich City,Stoke City,1,1,D,0
+3754054,2,2015-12-26,Manchester City,Sunderland,4,1,H,3
+3754113,2,2015-12-05,Southampton,Aston Villa,1,1,D,0
+3754107,2,2015-08-14,Aston Villa,Manchester United,0,1,A,-1
+3754105,2,2015-09-28,West Bromwich Albion,Everton,2,3,A,-1
+3754097,2,2015-08-08,Manchester United,Tottenham Hotspur,1,0,H,1
+3754102,2,2015-10-18,Newcastle United,Norwich City,6,2,H,4
+3754115,2,2015-10-17,Chelsea,Aston Villa,2,0,H,2
+3754148,2,2015-09-13,Sunderland,Tottenham Hotspur,0,1,A,-1
+3754169,2,2015-09-19,AFC Bournemouth,Sunderland,2,0,H,2
+3754174,2,2015-09-26,Leicester City,Arsenal,2,5,A,-3
+3754185,2,2015-11-21,Watford,Manchester United,1,2,A,-1
+3754162,2,2015-12-12,AFC Bournemouth,Manchester United,2,1,H,1
+3754096,2,2015-12-12,West Ham United,Stoke City,0,0,D,0
+3754171,2,2015-10-04,Arsenal,Manchester United,3,0,H,3
+3754119,2,2015-10-25,Sunderland,Newcastle United,3,0,H,3
+3754126,2,2015-10-24,Arsenal,Everton,2,1,H,1
+3754133,2,2015-10-24,Norwich City,West Bromwich Albion,0,1,A,-1
+3754167,2,2015-10-31,Manchester City,Norwich City,2,1,H,1
+3754145,2,2015-08-10,West Bromwich Albion,Manchester City,0,3,A,-3
+3754153,2,2015-12-19,Stoke City,Crystal Palace,1,2,A,-1
+3754143,2,2015-12-06,Newcastle United,Liverpool,2,0,H,2
+3754186,2,2015-11-28,Leicester City,Manchester United,1,1,D,0
+3754130,2,2015-12-28,Norwich City,Aston Villa,2,0,H,2
+3754188,2,2015-12-19,Southampton,Tottenham Hotspur,0,2,A,-2
+3754178,2,2015-11-28,Aston Villa,Watford,2,3,A,-1
+3754157,2,2015-11-28,AFC Bournemouth,Everton,3,3,D,0
+3754166,2,2015-12-19,Everton,Leicester City,2,3,A,-1
+3754211,2,2015-11-21,Newcastle United,Leicester City,0,3,A,-3
+3754150,2,2015-11-28,Sunderland,Stoke City,2,0,H,2
+3754218,2,2015-12-12,Crystal Palace,Southampton,1,0,H,1
+3754205,2,2015-08-29,Newcastle United,Arsenal,0,1,A,-1
+3754221,2,2015-08-30,Swansea City,Manchester United,2,1,H,1
+3754198,2,2015-10-17,Tottenham Hotspur,Liverpool,0,0,D,0
+3754193,2,2015-10-17,Manchester City,AFC Bournemouth,5,1,H,4
+3754222,2,2015-09-20,Tottenham Hotspur,Crystal Palace,1,0,H,1
+3754213,2,2015-09-12,Watford,Swansea City,1,0,H,1
+3754212,2,2015-09-26,Liverpool,Aston Villa,3,2,H,1
+3754223,2,2015-10-31,Crystal Palace,Manchester United,0,0,D,0
+3754197,2,2015-09-26,Tottenham Hotspur,Manchester City,4,1,H,3
+3754208,2,2015-11-21,Manchester City,Liverpool,1,4,A,-3
+3754204,2,2015-08-29,Aston Villa,Sunderland,2,2,D,0
+3754194,2,2015-11-07,West Ham United,Everton,1,1,D,0
+3754219,2,2015-12-19,West Bromwich Albion,AFC Bournemouth,1,2,A,-1
+3754254,2,2015-08-22,Manchester United,Newcastle United,0,0,D,0
+3754230,2,2015-10-25,Liverpool,Southampton,1,1,D,0
+3754285,2,2015-12-26,Aston Villa,West Ham United,1,1,D,0
+3754233,2,2015-08-23,Everton,Manchester City,0,2,A,-2
+3754270,2,2015-08-15,Tottenham Hotspur,Stoke City,2,2,D,0
+3754237,2,2015-08-08,Leicester City,Sunderland,4,2,H,2
+3754257,2,2015-09-12,Crystal Palace,Manchester City,0,1,A,-1
+3754266,2,2015-09-27,Watford,Crystal Palace,0,1,A,-1
+3754256,2,2015-10-17,Everton,Manchester United,0,3,A,-3
+3754288,2,2015-10-24,West Ham United,Chelsea,2,1,H,1
+3754238,2,2015-11-07,AFC Bournemouth,Newcastle United,0,1,A,-1
+3754269,2,2015-10-19,Swansea City,Stoke City,0,1,A,-1
+3754234,2,2015-10-25,AFC Bournemouth,Tottenham Hotspur,1,5,A,-4
+3754246,2,2015-08-29,Manchester City,Watford,2,0,H,2
+3754273,2,2015-10-31,Watford,West Ham United,2,0,H,2
+3754263,2,2015-10-24,Leicester City,Crystal Palace,1,0,H,1
+3754268,2,2015-08-29,Tottenham Hotspur,Everton,0,0,D,0
+3754286,2,2015-12-05,Watford,Norwich City,2,0,H,2
+3754291,2,2015-12-28,Watford,Tottenham Hotspur,1,2,A,-1
+3754283,2,2015-11-21,Everton,Aston Villa,4,0,H,4
+3754235,2,2015-11-29,West Ham United,West Bromwich Albion,1,1,D,0
+3754279,2,2015-12-26,Swansea City,West Bromwich Albion,1,0,H,1
+3754276,2,2015-12-13,Tottenham Hotspur,Newcastle United,1,2,A,-1
+3754287,2,2015-12-26,Chelsea,Watford,2,2,D,0
+3754259,2,2015-12-20,Swansea City,West Ham United,0,0,D,0
+3754335,2,2015-10-03,Norwich City,Leicester City,1,2,A,-1
+3754298,2,2015-09-19,Swansea City,Everton,0,0,D,0
+3754315,2,2015-09-12,Norwich City,AFC Bournemouth,3,1,H,2
+3754330,2,2015-10-03,Aston Villa,Stoke City,0,1,A,-1
+3754337,2,2015-08-30,Southampton,Norwich City,3,0,H,3
+3754297,2,2015-11-07,Manchester United,West Bromwich Albion,2,0,H,2
+3754301,2,2015-11-21,West Bromwich Albion,Arsenal,2,1,H,1
+3754323,2,2015-09-26,West Ham United,Norwich City,2,2,D,0
+3754304,2,2015-11-28,Crystal Palace,Newcastle United,5,1,H,4
+3754311,2,2015-11-07,Norwich City,Swansea City,1,0,H,1
+3754328,2,2015-12-12,Manchester City,Swansea City,2,1,H,1
+3754325,2,2015-09-12,West Bromwich Albion,Southampton,0,0,D,0
+3754329,2,2015-09-14,West Ham United,Newcastle United,2,0,H,2
+3754302,2,2015-10-17,Southampton,Leicester City,2,2,D,0
+3754013,2,2015-12-14,Leicester City,Chelsea,2,1,H,1
+3754044,2,2015-12-19,Manchester United,Norwich City,1,2,A,-1
+3754351,2,2015-11-08,Liverpool,Crystal Palace,1,2,A,-1
+3754343,2,2015-12-26,Liverpool,Leicester City,1,0,H,1
+3754109,2,2015-11-22,Tottenham Hotspur,West Ham United,4,1,H,3
+3754182,2,2015-12-12,Norwich City,Everton,1,1,D,0
+3754240,2,2015-09-12,Arsenal,Stoke City,2,0,H,2
+3754336,2,2015-09-12,Everton,Chelsea,3,1,H,2
+3754247,2,2015-11-21,Southampton,Stoke City,0,1,A,-1
+3754156,2,2015-11-07,Leicester City,Watford,2,1,H,1
+3754265,2,2015-11-08,Arsenal,Tottenham Hotspur,1,1,D,0
+3754000,2,2015-11-07,Sunderland,Southampton,0,1,A,-1
+3754003,2,2015-09-12,Manchester United,Liverpool,3,1,H,2
+3754344,2,2015-08-15,Swansea City,Newcastle United,2,0,H,2
+3754131,2,2015-08-22,West Ham United,AFC Bournemouth,3,4,A,-1
+3754300,2,2015-08-08,Everton,Watford,2,2,D,0
+3754312,2,2015-08-16,Crystal Palace,Arsenal,1,2,A,-1
+3754138,2,2015-08-08,Norwich City,Crystal Palace,1,3,A,-2
+3754203,2,2015-08-15,West Ham United,Leicester City,1,2,A,-1
+3754190,2,2015-08-22,Crystal Palace,Aston Villa,2,1,H,1
+3754066,2,2015-08-16,Manchester City,Chelsea,3,0,H,3
+3754034,2,2015-08-15,Southampton,Everton,0,3,A,-3
+3753985,2,2015-08-09,Stoke City,Liverpool,0,1,A,-1
+3753987,2,2015-08-22,Leicester City,Tottenham Hotspur,1,1,D,0
+3754189,2,2015-08-23,Watford,Southampton,0,0,D,0
+3754180,2,2015-08-22,Sunderland,Swansea City,1,1,D,0
+3754059,2,2015-08-23,West Bromwich Albion,Chelsea,2,3,A,-1
+3754064,2,2016-03-20,Southampton,Liverpool,3,2,H,1
+3754065,2,2016-01-13,Tottenham Hotspur,Leicester City,0,1,A,-1
+3754173,2,2015-12-28,Arsenal,AFC Bournemouth,2,0,H,2
+3754175,2,2016-04-02,Sunderland,West Bromwich Albion,0,0,D,0
+3753973,2,2016-03-19,Chelsea,West Ham United,2,2,D,0
+3753975,2,2016-01-23,Sunderland,AFC Bournemouth,1,1,D,0
+3753976,2,2016-03-02,Arsenal,Swansea City,1,2,A,-1
+3753977,2,2016-03-19,Watford,Stoke City,1,2,A,-1
+3753980,2,2016-03-19,Everton,Arsenal,0,2,A,-2
+3753981,2,2016-01-12,Aston Villa,Crystal Palace,1,0,H,1
+3753982,2,2016-04-03,Leicester City,Southampton,1,0,H,1
+3753986,2,2016-04-10,Liverpool,Stoke City,4,1,H,3
+3753988,2,2016-03-12,AFC Bournemouth,Swansea City,3,2,H,1
+3753989,2,2016-05-11,Sunderland,Everton,3,0,H,3
+3753990,2,2016-04-24,Sunderland,Arsenal,0,0,D,0
+3753991,2,2016-03-02,Liverpool,Manchester City,3,0,H,3
+3753992,2,2016-05-08,Tottenham Hotspur,Southampton,1,2,A,-1
+3753994,2,2016-05-15,Southampton,Crystal Palace,4,1,H,3
+3753997,2,2016-02-02,West Ham United,Aston Villa,2,0,H,2
+3753998,2,2015-12-28,West Ham United,Southampton,2,1,H,1
+3754002,2,2016-03-14,Leicester City,Newcastle United,1,0,H,1
+3754004,2,2016-01-16,AFC Bournemouth,Norwich City,3,0,H,3
+3754005,2,2016-03-02,Stoke City,Newcastle United,1,0,H,1
+3754009,2,2016-04-17,Arsenal,Crystal Palace,1,1,D,0
+3754012,2,2016-02-27,Southampton,Chelsea,1,2,A,-1
+3754016,2,2016-04-09,Southampton,Newcastle United,3,1,H,2
+3754018,2,2016-05-01,Swansea City,Liverpool,3,1,H,2
+3754019,2,2015-12-28,Manchester United,Chelsea,0,0,D,0
+3754021,2,2016-01-12,AFC Bournemouth,West Ham United,1,3,A,-2
+3754022,2,2016-04-09,Crystal Palace,Norwich City,1,0,H,1
+3754024,2,2016-04-16,Newcastle United,Swansea City,3,0,H,3
+3754026,2,2016-05-07,Crystal Palace,Stoke City,2,1,H,1
+3754027,2,2016-01-16,Tottenham Hotspur,Sunderland,4,1,H,3
+3754030,2,2016-04-09,Watford,Everton,1,1,D,0
+3754031,2,2016-02-13,Sunderland,Manchester United,2,1,H,1
+3754032,2,2016-01-13,Stoke City,Norwich City,3,1,H,2
+3754033,2,2016-05-07,Leicester City,Everton,3,1,H,2
+3754035,2,2016-04-09,Manchester City,West Bromwich Albion,2,1,H,1
+3754036,2,2016-01-02,Sunderland,Aston Villa,3,1,H,2
+3754061,2,2016-03-05,Chelsea,Stoke City,1,1,D,0
+3754062,2,2016-01-13,Chelsea,West Bromwich Albion,2,2,D,0
+3754063,2,2016-04-30,Watford,Aston Villa,3,2,H,1
+3754069,2,2016-01-02,Arsenal,Newcastle United,1,0,H,1
+3754070,2,2016-05-07,Aston Villa,Newcastle United,0,0,D,0
+3754071,2,2016-01-13,Swansea City,Sunderland,2,4,A,-2
+3754075,2,2016-04-02,Aston Villa,Chelsea,0,4,A,-4
+3754080,2,2016-02-06,Tottenham Hotspur,Watford,1,0,H,1
+3754081,2,2016-03-06,West Bromwich Albion,Manchester United,1,0,H,1
+3754084,2,2016-01-23,West Bromwich Albion,Aston Villa,0,0,D,0
+3754086,2,2016-04-20,West Ham United,Watford,3,1,H,2
+3754087,2,2016-04-02,Liverpool,Tottenham Hotspur,1,1,D,0
+3754088,2,2016-01-12,Newcastle United,Manchester United,3,3,D,0
+3754089,2,2016-02-02,Crystal Palace,AFC Bournemouth,1,2,A,-1
+3754092,2,2016-05-02,Chelsea,Tottenham Hotspur,2,2,D,0
+3754094,2,2016-02-02,Manchester United,Stoke City,3,0,H,3
+3754095,2,2016-02-02,Sunderland,Manchester City,0,1,A,-1
+3754100,2,2016-03-20,Newcastle United,Sunderland,1,1,D,0
+3754101,2,2016-01-02,Norwich City,Southampton,1,0,H,1
+3754103,2,2016-02-03,Watford,Chelsea,0,0,D,0
+3754108,2,2016-05-07,Sunderland,Chelsea,3,2,H,1
+3754110,2,2016-01-23,West Ham United,Manchester City,2,2,D,0
+3754111,2,2016-01-24,Arsenal,Chelsea,0,1,A,-1
+3754114,2,2016-01-03,Crystal Palace,Chelsea,0,3,A,-3
+3754116,2,2016-04-09,Swansea City,Chelsea,1,0,H,1
+3754118,2,2016-04-02,Arsenal,Watford,4,0,H,4
+3754120,2,2016-02-06,Southampton,West Ham United,1,0,H,1
+3754121,2,2016-02-27,Watford,AFC Bournemouth,0,0,D,0
+3754122,2,2016-01-02,West Bromwich Albion,Stoke City,2,1,H,1
+3754123,2,2016-05-15,Everton,Norwich City,3,0,H,3
+3754124,2,2016-03-20,Manchester City,Manchester United,0,1,A,-1
+3754125,2,2016-01-16,Chelsea,Everton,3,3,D,0
+3754127,2,2016-02-06,Stoke City,Everton,0,3,A,-3
+3754132,2,2016-04-30,Stoke City,Sunderland,1,1,D,0
+3754134,2,2016-05-10,West Ham United,Manchester United,3,2,H,1
+3754137,2,2016-04-16,Everton,Southampton,1,1,D,0
+3754139,2,2016-02-13,Swansea City,Southampton,0,1,A,-1
+3754140,2,2016-01-03,Everton,Tottenham Hotspur,1,1,D,0
+3754142,2,2016-01-13,Manchester City,Everton,0,0,D,0
+3754144,2,2016-04-02,AFC Bournemouth,Manchester City,0,4,A,-4
+3754147,2,2016-02-14,Manchester City,Tottenham Hotspur,1,2,A,-1
+3754149,2,2016-05-15,Swansea City,Manchester City,1,1,D,0
+3754151,2,2016-03-05,Swansea City,Norwich City,1,0,H,1
+3754152,2,2016-04-10,Sunderland,Leicester City,0,2,A,-2
+3754154,2,2016-04-23,Liverpool,Newcastle United,2,2,D,0
+3754155,2,2016-04-16,West Bromwich Albion,Watford,0,1,A,-1
+3754158,2,2016-05-07,West Ham United,Swansea City,1,4,A,-3
+3754159,2,2016-05-17,Manchester United,AFC Bournemouth,3,1,H,2
+3754161,2,2016-01-18,Swansea City,Watford,1,0,H,1
+3754163,2,2016-01-24,Everton,Swansea City,1,2,A,-1
+3754164,2,2016-03-05,Southampton,Sunderland,1,1,D,0
+3754165,2,2016-05-01,Manchester United,Leicester City,1,1,D,0
+3754168,2,2016-01-16,Southampton,West Bromwich Albion,3,0,H,3
+3754170,2,2016-04-30,Newcastle United,Crystal Palace,1,0,H,1
+3754172,2,2016-04-16,Norwich City,Sunderland,0,3,A,-3
+3754176,2,2016-04-02,West Ham United,Crystal Palace,2,2,D,0
+3754177,2,2016-03-05,Newcastle United,AFC Bournemouth,1,3,A,-2
+3754179,2,2016-01-23,Crystal Palace,Tottenham Hotspur,1,3,A,-2
+3754181,2,2016-03-19,Crystal Palace,Leicester City,0,1,A,-1
+3754183,2,2016-01-13,Southampton,Watford,2,0,H,2
+3754184,2,2016-04-30,Arsenal,Norwich City,1,0,H,1
+3754187,2,2016-04-18,Stoke City,Tottenham Hotspur,0,4,A,-4
+3754191,2,2015-11-01,Southampton,AFC Bournemouth,2,0,H,2
+3754192,2,2016-04-30,West Bromwich Albion,West Ham United,0,3,A,-3
+3754195,2,2015-12-28,West Bromwich Albion,Newcastle United,1,0,H,1
+3754196,2,2016-03-12,Stoke City,Southampton,1,2,A,-1
+3754199,2,2016-05-15,Stoke City,West Ham United,2,1,H,1
+3754200,2,2016-01-23,Manchester United,Southampton,0,1,A,-1
+3754201,2,2016-02-02,Arsenal,Southampton,0,0,D,0
+3754202,2,2016-01-17,Stoke City,Arsenal,0,0,D,0
+3754206,2,2016-04-19,Newcastle United,Manchester City,1,1,D,0
+3754207,2,2016-05-11,Norwich City,Watford,4,2,H,2
+3754209,2,2016-04-10,Tottenham Hotspur,Manchester United,3,0,H,3
+3754210,2,2016-05-07,Norwich City,Manchester United,0,1,A,-1
+3754214,2,2016-02-14,Aston Villa,Liverpool,0,6,A,-5
+3754215,2,2015-12-05,West Bromwich Albion,Tottenham Hotspur,1,1,D,0
+3754216,2,2016-04-17,AFC Bournemouth,Liverpool,1,2,A,-1
+3754220,2,2016-03-06,Crystal Palace,Liverpool,1,2,A,-1
+3754224,2,2016-03-19,Swansea City,Aston Villa,1,0,H,1
+3754225,2,2016-05-07,AFC Bournemouth,West Bromwich Albion,1,1,D,0
+3754227,2,2016-04-17,Leicester City,West Ham United,2,2,D,0
+3754228,2,2016-04-24,Leicester City,Swansea City,4,0,H,4
+3754229,2,2016-05-15,Chelsea,Leicester City,1,1,D,0
+3754231,2,2016-03-01,Leicester City,West Bromwich Albion,2,2,D,0
+3754232,2,2016-03-02,Manchester United,Watford,1,0,H,1
+3754236,2,2016-02-27,West Bromwich Albion,Crystal Palace,3,2,H,1
+3754239,2,2016-02-28,Manchester United,Arsenal,3,2,H,1
+3754241,2,2016-04-09,West Ham United,Arsenal,3,3,D,0
+3754242,2,2016-04-23,AFC Bournemouth,Chelsea,1,4,A,-3
+3754243,2,2016-04-02,Norwich City,Newcastle United,3,2,H,1
+3754244,2,2016-02-13,Norwich City,West Ham United,2,2,D,0
+3754249,2,2016-03-05,Manchester City,Aston Villa,4,0,H,4
+3754250,2,2016-01-16,Aston Villa,Leicester City,1,1,D,0
+3754251,2,2016-01-02,West Ham United,Liverpool,2,0,H,2
+3754252,2,2016-02-03,Everton,Newcastle United,3,0,H,3
+3754253,2,2016-02-07,AFC Bournemouth,Arsenal,0,2,A,-2
+3754260,2,2016-01-16,Manchester City,Crystal Palace,4,0,H,4
+3754261,2,2016-02-14,Arsenal,Leicester City,2,1,H,1
+3754262,2,2016-04-09,Aston Villa,AFC Bournemouth,1,2,A,-1
+3754264,2,2016-02-13,Chelsea,Newcastle United,5,1,H,4
+3754295,2,2016-04-16,Manchester United,Aston Villa,1,0,H,1
+3754271,2,2016-01-23,Watford,Newcastle United,2,1,H,1
+3754272,2,2016-04-02,Stoke City,Swansea City,2,2,D,0
+3754274,2,2016-02-13,AFC Bournemouth,Stoke City,1,3,A,-2
+3754275,2,2016-02-02,Leicester City,Liverpool,2,0,H,2
+3754277,2,2016-03-05,Everton,West Ham United,2,3,A,-1
+3754280,2,2016-03-01,Norwich City,Chelsea,1,2,A,-1
+3754281,2,2016-02-07,Chelsea,Manchester United,1,1,D,0
+3754282,2,2016-04-23,Aston Villa,Southampton,2,4,A,-2
+3754284,2,2016-04-21,Arsenal,West Bromwich Albion,2,0,H,2
+3754289,2,2016-03-05,Watford,Leicester City,0,1,A,-1
+3754290,2,2016-02-06,Manchester City,Leicester City,1,3,A,-2
+3754292,2,2016-02-06,Newcastle United,West Bromwich Albion,1,0,H,1
+3754294,2,2016-04-20,Liverpool,Everton,4,0,H,4
+3754248,2,2015-12-26,AFC Bournemouth,Crystal Palace,0,0,D,0
+3754299,2,2016-04-03,Manchester United,Everton,1,0,H,1
+3754303,2,2016-02-06,Swansea City,Crystal Palace,1,1,D,0
+3754305,2,2016-01-13,Liverpool,Arsenal,3,3,D,0
+3754306,2,2016-02-06,Aston Villa,Norwich City,2,0,H,2
+3754307,2,2016-04-23,Manchester City,Stoke City,4,0,H,4
+3754308,2,2016-05-15,Watford,Sunderland,2,2,D,0
+3754310,2,2016-04-20,Manchester United,Crystal Palace,2,0,H,2
+3754313,2,2016-03-12,Norwich City,Manchester City,0,0,D,0
+3754314,2,2016-05-08,Manchester City,Arsenal,2,2,D,0
+3754316,2,2016-02-06,Liverpool,Sunderland,2,2,D,0
+3754317,2,2016-02-02,Norwich City,Tottenham Hotspur,0,3,A,-3
+3754318,2,2016-03-05,Tottenham Hotspur,Arsenal,2,2,D,0
+3754319,2,2016-01-02,Manchester United,Swansea City,2,1,H,1
+3754320,2,2016-05-01,Southampton,Manchester City,4,2,H,2
+3754321,2,2016-02-27,Stoke City,Aston Villa,2,1,H,1
+3754322,2,2016-04-16,Chelsea,Manchester City,0,3,A,-3
+3754324,2,2016-02-28,Tottenham Hotspur,Swansea City,2,1,H,1
+3754326,2,2015-12-28,Crystal Palace,Swansea City,0,0,D,0
+3754327,2,2016-03-01,Aston Villa,Everton,1,3,A,-2
+3754331,2,2016-02-27,West Ham United,Sunderland,1,0,H,1
+3754332,2,2016-04-25,Tottenham Hotspur,West Bromwich Albion,1,1,D,0
+3754333,2,2016-05-15,Newcastle United,Tottenham Hotspur,5,1,H,4
+3754334,2,2016-03-01,AFC Bournemouth,Southampton,2,0,H,2
+3754338,2,2016-01-16,Newcastle United,West Ham United,2,1,H,1
+3754340,2,2016-02-02,West Bromwich Albion,Swansea City,1,1,D,0
+3754341,2,2016-01-23,Leicester City,Stoke City,3,0,H,3
+3754342,2,2016-05-08,Liverpool,Watford,2,0,H,2
+3754345,2,2016-01-17,Liverpool,Manchester United,0,1,A,-1
+3754346,2,2016-01-02,Watford,Manchester City,1,2,A,-1
+3754348,2,2016-01-23,Norwich City,Liverpool,4,5,A,-1
+3754349,2,2016-03-02,West Ham United,Tottenham Hotspur,1,0,H,1
+3754350,2,2016-02-13,Everton,West Bromwich Albion,0,1,A,-1
+3754258,2,2015-11-08,Aston Villa,Manchester City,0,0,D,0
+3754020,2,2015-08-17,Liverpool,AFC Bournemouth,1,0,H,1
+3754267,2,2015-08-15,Watford,West Bromwich Albion,0,0,D,0
+3754141,2,2015-08-09,Arsenal,West Ham United,0,2,A,-2
+3754128,2,2015-08-08,AFC Bournemouth,Aston Villa,0,1,A,-1
+3754078,2,2015-08-08,Chelsea,Swansea City,2,2,D,0
+3749493,2,2003-08-16,Arsenal,Everton,2,1,H,1
+3749448,2,2004-04-09,Arsenal,Liverpool,4,2,H,2
+3749196,2,2003-11-08,Arsenal,Tottenham Hotspur,2,1,H,1
+3749454,2,2003-08-31,Manchester City,Arsenal,1,2,A,-1
+3749603,2,2004-05-09,Fulham,Arsenal,0,1,A,-1
+3749052,2,2004-02-07,Wolverhampton Wanderers,Arsenal,1,3,A,-2
+3749296,2,2003-09-13,Arsenal,Portsmouth,1,1,D,0
+3749522,2,2003-12-26,Arsenal,Wolverhampton Wanderers,3,0,H,3
+3749246,2,2004-03-28,Arsenal,Manchester United,1,1,D,0
+3749257,2,2004-05-15,Arsenal,Leicester City,2,1,H,1
+3749642,2,2004-02-28,Arsenal,Charlton Athletic,2,1,H,1
+3749358,2,2003-08-24,Middlesbrough,Arsenal,0,4,A,-4
+3749346,2,2003-11-01,Leeds United,Arsenal,1,4,A,-3
+3749253,2,2003-10-04,Liverpool,Arsenal,1,2,A,-1
+3749079,2,2003-10-18,Arsenal,Chelsea,2,1,H,1
+3749465,2,2004-03-13,Blackburn Rovers,Arsenal,0,2,A,-2
+3749133,2,2004-01-18,Aston Villa,Arsenal,0,2,A,-2
+3749528,2,2003-09-26,Arsenal,Newcastle United,3,2,H,1
+3749233,2,2004-02-01,Arsenal,Manchester City,2,1,H,1
+3749462,2,2004-05-01,Arsenal,Birmingham City,0,0,D,0
+3749552,2,2003-09-21,Manchester United,Arsenal,0,0,D,0
+3749276,2,2004-02-21,Chelsea,Arsenal,1,2,A,-1
+3749068,2,2004-04-25,Tottenham Hotspur,Arsenal,2,2,D,0
+3749310,2,2003-12-29,Southampton,Arsenal,0,1,A,-1
+3749434,2,2003-11-22,Birmingham City,Arsenal,0,3,A,-3
+3749192,2,2003-11-30,Arsenal,Fulham,0,0,D,0
+3749360,2,2003-12-14,Arsenal,Blackburn Rovers,1,0,H,1
+3749453,2,2004-04-16,Arsenal,Leeds United,5,0,H,5
+3749278,2,2003-12-20,Bolton Wanderers,Arsenal,1,1,D,0
+3749274,2,2004-05-04,Portsmouth,Arsenal,1,1,D,0
+3749590,2,2003-12-06,Leicester City,Arsenal,1,1,D,0
+3749631,2,2004-02-10,Arsenal,Southampton,2,0,H,2
+3749117,2,2004-01-07,Everton,Arsenal,1,1,D,0
+3749108,2,2003-08-27,Arsenal,Aston Villa,2,0,H,2
+3749153,2,2004-01-10,Arsenal,Middlesbrough,4,1,H,3
+3749403,2,2004-03-20,Arsenal,Bolton Wanderers,2,1,H,1
+3749526,2,2003-10-26,Charlton Athletic,Arsenal,1,1,D,0
+3749431,2,2004-04-11,Newcastle United,Arsenal,0,0,D,0

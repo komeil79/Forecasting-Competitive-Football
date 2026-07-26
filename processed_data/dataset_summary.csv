@@ -1,0 +1,7 @@
+Dataset,Rows,Columns
+Train Prematch,899,24
+Val Prematch,193,24
+Test Prematch,193,24
+Train Snapshots,17184,12
+Val Snapshots,3696,12
+Test Snapshots,3694,12
