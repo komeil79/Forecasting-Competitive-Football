@@ -213,46 +213,59 @@ def compute_ece(y_true, y_prob, n_bins=10):
     ece = np.sum(bin_counts * np.abs(bin_accuracy - bin_confidence)) / np.sum(bin_counts)
     return ece
 
-def evaluate_classifier(model, X, y_true, model_name, task, calibrate=True, X_cal=None, y_cal=None):
-    """Return metrics: log_loss, brier, accuracy, ECE, RPS (Ranked Probability Score)."""
-    if hasattr(model, 'predict_proba'):
-        y_prob = model.predict_proba(X)
+from sklearn.calibration import CalibratedClassifierCV
+
+def evaluate_classifier(model, X_train, y_train, X_test, y_test, model_name, task, calibrate=True):
+    """
+    Fit model on training data, optionally calibrate with 5-fold CV,
+    then evaluate on test set.
+    """
+    if calibrate:
+        # Wrap the model with CalibratedClassifierCV using 5-fold CV.
+        # This will retrain the base model internally, but it's the only way
+        # if your sklearn version doesn't support cv='prefit'.
+        calibrated_model = CalibratedClassifierCV(estimator=model, method='sigmoid', cv=5)
+        calibrated_model.fit(X_train, y_train)
+        y_prob = calibrated_model.predict_proba(X_test)
     else:
-        y_prob = None
-    if y_prob is not None:
-        # Calibrate if requested and calibration data provided
-        if calibrate and X_cal is not None and y_cal is not None:
-            cal_model = CalibratedClassifierCV(model, method='sigmoid', cv='prefit')
-            cal_model.fit(X_cal, y_cal)
-            y_prob_cal = cal_model.predict_proba(X)
+        # Just use the model as is (must have predict_proba)
+        if not hasattr(model, 'predict_proba'):
+            # For models that don't have predict_proba, we can't calibrate anyway
+            y_prob = None
         else:
-            y_prob_cal = y_prob
-        # Log-loss
-        ll = log_loss(y_true, y_prob_cal)
-        brier = brier_score_loss(y_true, y_prob_cal[:, 1] if y_prob_cal.shape[1]==2 else 
-                                 # for multi-class, we need per-class brier; we'll compute average.
-                                 np.mean([brier_score_loss(y_true==i, y_prob_cal[:, i]) for i in range(y_prob_cal.shape[1])])
-                                 )
-        # ECE (for the predicted class probability? Typically we compute per class; we'll average)
-        ece = np.mean([compute_ece((y_true==i).astype(int), y_prob_cal[:, i]) for i in range(y_prob_cal.shape[1])])
-        # RPS - Ranked Probability Score for 3 classes
-        # For each sample, RPS = sum_{k=1}^{K-1} (CDF_pred - CDF_true)^2
-        n_classes = y_prob_cal.shape[1]
-        rps = []
-        for i in range(len(y_true)):
-            true_label = y_true[i]
-            cum_pred = np.cumsum(y_prob_cal[i, :])
-            cum_true = np.zeros(n_classes)
-            cum_true[true_label:] = 1
-            rps.append(np.sum((cum_pred[:-1] - cum_true[:-1])**2))
-        rps = np.mean(rps)
-        # Accuracy
-        acc = accuracy_score(y_true, np.argmax(y_prob_cal, axis=1))
-        return {'log_loss': ll, 'brier': brier, 'ece': ece, 'rps': rps, 'accuracy': acc}
-    else:
-        # For models without probabilities (e.g., some classifiers)
-        return {'log_loss': np.nan, 'brier': np.nan, 'ece': np.nan, 'rps': np.nan, 
-                'accuracy': accuracy_score(y_true, model.predict(X))}
+            y_prob = model.predict_proba(X_test)
+    
+    if y_prob is None:
+        # Fallback for models without probabilities
+        acc = accuracy_score(y_test, model.predict(X_test))
+        return {'log_loss': np.nan, 'brier': np.nan, 'ece': np.nan, 'rps': np.nan, 'accuracy': acc}
+    
+    # Compute metrics
+    n_classes = y_prob.shape[1]
+    
+    # Log-Loss
+    ll = log_loss(y_test, y_prob)
+    
+    # Brier (average per class)
+    brier = np.mean([brier_score_loss((y_test == i).astype(int), y_prob[:, i]) for i in range(n_classes)])
+    
+    # ECE (average per class)
+    ece = np.mean([compute_ece((y_test == i).astype(int), y_prob[:, i]) for i in range(n_classes)])
+    
+    # RPS (Ranked Probability Score)
+    rps_list = []
+    for i in range(len(y_test)):
+        true_label = y_test[i]
+        cum_pred = np.cumsum(y_prob[i, :])
+        cum_true = np.zeros(n_classes)
+        cum_true[true_label:] = 1
+        rps_list.append(np.sum((cum_pred[:-1] - cum_true[:-1]) ** 2))
+    rps = np.mean(rps_list)
+    
+    # Accuracy
+    acc = accuracy_score(y_test, np.argmax(y_prob, axis=1))
+    
+    return {'log_loss': ll, 'brier': brier, 'ece': ece, 'rps': rps, 'accuracy': acc}
 
 def evaluate_regressor(model, X, y_true):
     y_pred = model.predict(X)
@@ -296,9 +309,9 @@ for name, (model, param_grid) in clf_models.items():
         gs.fit(X_pre_train, y_pre_train_cls)
         best_model = gs.best_estimator_
     # Evaluate on test
-    res = evaluate_classifier(best_model, X_pre_test, y_pre_test_cls, 
-                              model_name=name, task='pre_cls', 
-                              calibrate=True, X_cal=X_pre_val, y_cal=y_pre_val_cls)
+    res = evaluate_classifier(best_model, X_pre_train, y_pre_train_cls,
+                          X_pre_test, y_pre_test_cls,
+                          model_name=name, task='pre_cls', calibrate=True)
     res['model'] = name
     results_cls.append(res)
 
@@ -343,9 +356,9 @@ for name, (model, param_grid) in clf_models.items():
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_cls)
         best_model = gs.best_estimator_
-    res = evaluate_classifier(best_model, X_snap_test, y_snap_test_cls,
-                              model_name=name, task='inplay_cls',
-                              calibrate=True, X_cal=X_snap_val, y_cal=y_snap_val_cls)
+    res = evaluate_classifier(best_model, X_snap_train, y_snap_train_cls,
+                          X_snap_test, y_snap_test_cls,
+                          model_name=name, task='inplay_cls', calibrate=True)
     res['model'] = name
     results_cls.append(res)
 
