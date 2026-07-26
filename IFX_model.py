@@ -15,7 +15,7 @@ class IFX_XGBoost:
     - Repeat until a set number of exclusions or until performance stops improving.
     """
     def __init__(self, n_iterations=5, early_stopping_rounds=10, 
-                 eval_metric='logloss', random_state=42, **xgb_params):
+                 eval_metric='mlogloss', random_state=42, **xgb_params):
         self.n_iterations = n_iterations
         self.early_stopping_rounds = early_stopping_rounds
         self.eval_metric = eval_metric
