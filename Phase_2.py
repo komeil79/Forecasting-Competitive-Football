@@ -9,6 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from sklearn.linear_model import LogisticRegression
+from sklearn.isotonic import IsotonicRegression
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.kernel_ridge import KernelRidge
@@ -215,55 +217,73 @@ def compute_ece(y_true, y_prob, n_bins=10):
 
 from sklearn.calibration import CalibratedClassifierCV
 
-def evaluate_classifier(model, X_train, y_train, X_test, y_test, model_name, task, calibrate=True):
+from sklearn.linear_model import LogisticRegression
+from sklearn.isotonic import IsotonicRegression
+
+def evaluate_classifier(model, X_train, y_train, X_test, y_test, model_name, task, calibrate=True, X_cal=None, y_cal=None):
     """
-    Fit model on training data, optionally calibrate with 5-fold CV,
-    then evaluate on test set.
+    Fit model (if not already fitted) and evaluate on test set.
+    If calibrate=True and calibration data provided, fit a Platt calibrator
+    on the model's predicted probabilities and apply to test.
     """
-    if calibrate:
-        # Wrap the model with CalibratedClassifierCV using 5-fold CV.
-        # This will retrain the base model internally, but it's the only way
-        # if your sklearn version doesn't support cv='prefit'.
-        calibrated_model = CalibratedClassifierCV(estimator=model, method='sigmoid', cv=5)
-        calibrated_model.fit(X_train, y_train)
-        y_prob = calibrated_model.predict_proba(X_test)
+    # If model is not fitted, fit it (only for non-IFX models; IFX already fitted)
+    if not hasattr(model, 'model') and not hasattr(model, 'predict_proba'):
+        # fallback: maybe model is already fitted
+        pass
+
+    # Get raw probabilities on calibration and test sets
+    if X_cal is not None:
+        probs_cal = model.predict_proba(X_cal)
     else:
-        # Just use the model as is (must have predict_proba)
-        if not hasattr(model, 'predict_proba'):
-            # For models that don't have predict_proba, we can't calibrate anyway
-            y_prob = None
-        else:
-            y_prob = model.predict_proba(X_test)
+        probs_cal = None
     
-    if y_prob is None:
-        # Fallback for models without probabilities
-        acc = accuracy_score(y_test, model.predict(X_test))
-        return {'log_loss': np.nan, 'brier': np.nan, 'ece': np.nan, 'rps': np.nan, 'accuracy': acc}
+    probs_test = model.predict_proba(X_test)
     
+    if calibrate and probs_cal is not None and y_cal is not None:
+        # Fit Platt scaling (LogisticRegression) on calibration probabilities
+        # For multi-class, we need a one-vs-rest calibration (or use CalibratedClassifierCV with cv='prefit')
+        # Since we have a separate calibration set, we can use CalibratedClassifierCV with cv='prefit' if sklearn version supports it.
+        # Alternatively, we fit a LogisticRegression on the logits for each class (Platt scaling)
+        # For simplicity, we'll use CalibratedClassifierCV with cv='prefit' if available, else we'll use a simple method.
+        try:
+            from sklearn.calibration import CalibratedClassifierCV
+            # Use cv='prefit' (requires sklearn >= 0.24)
+            calibrator = CalibratedClassifierCV(estimator=model, method='sigmoid', cv='prefit')
+            calibrator.fit(X_cal, y_cal)
+            probs_test = calibrator.predict_proba(X_test)
+        except (ValueError, TypeError, AttributeError):
+            # If cv='prefit' not supported, fallback to LogisticRegression on predicted probabilities
+            # For each class, fit a logistic regression on the predicted probability of that class
+            n_classes = probs_cal.shape[1]
+            calibrated_probs = np.zeros_like(probs_test)
+            for i in range(n_classes):
+                # Fit a logistic regression on the logit of the probability? 
+                # Simpler: use IsotonicRegression
+                iso = IsotonicRegression(out_of_bounds='clip')
+                iso.fit(probs_cal[:, i], (y_cal == i).astype(int))
+                calibrated_probs[:, i] = iso.predict(probs_test[:, i])
+            # Normalize to sum to 1
+            calibrated_probs = calibrated_probs / calibrated_probs.sum(axis=1, keepdims=True)
+            probs_test = calibrated_probs
+    else:
+        # No calibration
+        pass
+
     # Compute metrics
-    n_classes = y_prob.shape[1]
-    
-    # Log-Loss
-    ll = log_loss(y_test, y_prob)
-    
-    # Brier (average per class)
-    brier = np.mean([brier_score_loss((y_test == i).astype(int), y_prob[:, i]) for i in range(n_classes)])
-    
-    # ECE (average per class)
-    ece = np.mean([compute_ece((y_test == i).astype(int), y_prob[:, i]) for i in range(n_classes)])
-    
-    # RPS (Ranked Probability Score)
+    n_classes = probs_test.shape[1]
+    ll = log_loss(y_test, probs_test)
+    brier = np.mean([brier_score_loss((y_test == i).astype(int), probs_test[:, i]) for i in range(n_classes)])
+    ece = np.mean([compute_ece((y_test == i).astype(int), probs_test[:, i]) for i in range(n_classes)])
+    # RPS
     rps_list = []
     for i in range(len(y_test)):
         true_label = y_test[i]
-        cum_pred = np.cumsum(y_prob[i, :])
+        cum_pred = np.cumsum(probs_test[i, :])
         cum_true = np.zeros(n_classes)
         cum_true[true_label:] = 1
         rps_list.append(np.sum((cum_pred[:-1] - cum_true[:-1]) ** 2))
     rps = np.mean(rps_list)
-    
-    # Accuracy
-    acc = accuracy_score(y_test, np.argmax(y_prob, axis=1))
+    acc = accuracy_score(y_test, np.argmax(probs_test, axis=1))
     
     return {'log_loss': ll, 'brier': brier, 'ece': ece, 'rps': rps, 'accuracy': acc}
 
@@ -310,8 +330,9 @@ for name, (model, param_grid) in clf_models.items():
         best_model = gs.best_estimator_
     # Evaluate on test
     res = evaluate_classifier(best_model, X_pre_train, y_pre_train_cls,
-                          X_pre_test, y_pre_test_cls,
-                          model_name=name, task='pre_cls', calibrate=True)
+                              X_pre_test, y_pre_test_cls,
+                              model_name=name, task='pre_cls',
+                              calibrate=True, X_cal=X_pre_val, y_cal=y_pre_val_cls)
     res['model'] = name
     results_cls.append(res)
 
@@ -355,9 +376,10 @@ for name, (model, param_grid) in clf_models.items():
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_cls)
         best_model = gs.best_estimator_
-    res = evaluate_classifier(best_model, X_snap_train, y_snap_train_cls,
-                          X_snap_test, y_snap_test_cls,
-                          model_name=name, task='inplay_cls', calibrate=True)
+    res = evaluate_classifier(best_model, X_pre_train, y_pre_train_cls,
+                              X_pre_test, y_pre_test_cls,
+                              model_name=name, task='pre_cls',
+                              calibrate=True, X_cal=X_pre_val, y_cal=y_pre_val_cls)
     res['model'] = name
     results_cls.append(res)
 
