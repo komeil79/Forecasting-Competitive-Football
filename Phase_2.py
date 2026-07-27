@@ -9,6 +9,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from sklearn.kernel_approximation import RBFSampler, Nystroem
+from sklearn.linear_model import Ridge, SGDClassifier, SGDRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.isotonic import IsotonicRegression
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -37,6 +39,23 @@ import shap
 # For memory measurement
 import psutil
 
+
+# Helper function for approximating kernel models
+def make_approx_kernel_pipeline(task_type='classification'):
+    """Return a pipeline with Nystroem approximation + linear model."""
+    if task_type == 'classification':
+        return Pipeline([
+            ('scaler', StandardScaler()),
+            ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=42)),
+            ('clf', SGDClassifier(loss='log_loss', random_state=42, max_iter=1000, tol=1e-3))
+        ])
+    else:  # regression
+        return Pipeline([
+            ('scaler', StandardScaler()),
+            ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=42)),
+            ('reg', SGDRegressor(random_state=42, max_iter=1000, tol=1e-3))
+        ])
+    
 # ================ PHASE 1 IMPORTS (PF-SMOTE and IFX) ================
 from PF_SMOTE import PF_SMOTE
 from IFX_model import IFX_XGBoost
@@ -362,13 +381,36 @@ for name, (model, param_grid) in reg_models.items():
 # In-play classification (model 3)
 # We'll train on snapshot data, but we must respect match-level splitting.
 # Already done by using separate train/val/test snapshots.
+# In-play classification loop (replace the existing one)
 for name, (model, param_grid) in clf_models.items():
     print(f"Training {name} (in-play classification)...")
     if name == 'IFX-XGBoost':
         model = IFX_XGBoost(random_state=42, n_iterations=3)
         model.fit(X_snap_train, y_snap_train_cls, X_snap_val, y_snap_val_cls)
         best_model = model
+    elif name in ['KernelSVM', 'KernelRidge']:
+        # Use approximate kernel for large dataset
+        print(f"   ***Using Nystroem approximation for {name} (large dataset)***")
+        if name == 'KernelSVM':
+            approx_model = make_approx_kernel_pipeline('classification')
+        else:
+            # For KernelRidge we also use approximation
+            approx_model = make_approx_kernel_pipeline('classification')
+        # We'll use a simple grid for the approximate model (SGDClassifier)
+        param_grid_adj = {
+            'clf__alpha': [0.0001, 0.001, 0.01],
+            'kernel_approx__n_components': [50, 100, 200]
+        }
+        pipe = Pipeline([
+            ('scaler', StandardScaler()),
+            ('kernel_approx', Nystroem(kernel='rbf', random_state=42)),
+            ('clf', SGDClassifier(loss='log_loss', random_state=42, max_iter=1000, tol=1e-3))
+        ])
+        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
+        gs.fit(X_snap_train, y_snap_train_cls)
+        best_model = gs.best_estimator_
     else:
+        # Non‑kernel models: use PF‑SMOTE pipeline as before
         pipe = create_clf_pipeline(model, use_pf_smote=True, scaler=True)
         param_grid_adj = {}
         for k, v in param_grid.items():
@@ -376,7 +418,7 @@ for name, (model, param_grid) in clf_models.items():
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_cls)
         best_model = gs.best_estimator_
-    # Evaluate on the *snapshot* test set
+    # Evaluate
     res = evaluate_classifier(best_model, X_snap_train, y_snap_train_cls,
                               X_snap_test, y_snap_test_cls,
                               model_name=name, task='inplay_cls',
@@ -385,13 +427,30 @@ for name, (model, param_grid) in clf_models.items():
     results_cls.append(res)
 
 # In-play regression
+# In-play regression loop
 for name, (model, param_grid) in reg_models.items():
     print(f"Training {name} (in-play regression)...")
     if name == 'IFX-XGBoost':
         model = IFX_XGBoost(random_state=42, n_iterations=3, objective='reg:squarederror')
         model.fit(X_snap_train, y_snap_train_reg, X_snap_val, y_snap_val_reg)
         best_model = model
+    elif name in ['KernelRidge', 'KernelSVR']:
+        print(f"   ***Using Nystroem approximation for {name} (large dataset)***")
+        # Build approximate pipeline for regression
+        pipe = Pipeline([
+            ('scaler', StandardScaler()),
+            ('kernel_approx', Nystroem(kernel='rbf', random_state=42)),
+            ('reg', SGDRegressor(random_state=42, max_iter=1000, tol=1e-3))
+        ])
+        param_grid_adj = {
+            'reg__alpha': [0.0001, 0.001, 0.01],
+            'kernel_approx__n_components': [50, 100, 200]
+        }
+        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_mean_absolute_error', n_jobs=-1, verbose=0)
+        gs.fit(X_snap_train, y_snap_train_reg)
+        best_model = gs.best_estimator_
     else:
+        # Non‑kernel models: standard pipeline with scaling
         pipe = Pipeline([('scaler', StandardScaler()), ('reg', model)])
         param_grid_adj = {}
         for k, v in param_grid.items():
