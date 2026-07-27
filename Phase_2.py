@@ -471,3 +471,68 @@ print("Regression results:")
 print(df_reg_results)
 
 # PART 6 Done (all models trained and evaluated)
+
+# -------------------- 7. In-Play Evaluation: Metric vs Minute & Per-Phase Calibration --------------------
+# We need to evaluate performance as function of match minute.
+# We'll group test snapshots by minute (or time bins) and compute metrics per bin.
+# Also per-phase calibration (0-15', 15-30', ... 75-90').
+
+# Function to compute metrics per group
+def eval_per_minute(model, X, y, times, metric_func):
+    """Compute metric per minute bin."""
+    bins = np.arange(0, 95, 15)  # 0-15, 15-30, ..., 75-90+
+    metrics = []
+    for i in range(len(bins)-1):
+        mask = (times >= bins[i]) & (times < bins[i+1])
+        if np.sum(mask) == 0:
+            metrics.append(np.nan)
+        else:
+            # For classification, we need probabilities
+            y_prob = model.predict_proba(X[mask])
+            # For regression, we need predictions
+            # We'll handle both.
+            metrics.append(metric_func(y[mask], y_prob))
+    return bins[:-1], metrics
+
+# For classification: log-loss per phase
+def log_loss_per_phase(y_true, y_prob):
+    return log_loss(y_true, y_prob)
+
+# For regression: MAE per phase
+def mae_per_phase(y_true, y_pred):
+    return mean_absolute_error(y_true, y_pred)
+
+# We'll use the best model from the in-play classification/regression (maybe XGBoost or IFX).
+# For demonstration, we'll pick the XGBoost model (or the first model in the list).
+# In practice, we might want to loop over models.
+# Let's pick the XGBoost model (the one we trained earlier). We'll need to retrieve it.
+# For simplicity, we'll just retrain a single model for this analysis.
+# We'll create a simple XGBoost model and train on snapshots.
+
+best_clf = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
+best_clf.fit(X_snap_train, y_snap_train_cls)
+best_reg = XGBRegressor(random_state=42, n_estimators=100, learning_rate=0.1)
+best_reg.fit(X_snap_train, y_snap_train_reg)
+
+# Compute log-loss per phase
+bins, ll_per_phase = eval_per_minute(best_clf, X_snap_test, y_snap_test_cls, snap_times_test, log_loss_per_phase)
+plt.figure()
+plt.plot(bins+7.5, ll_per_phase, marker='o')
+plt.xlabel('Match minute (phase)')
+plt.ylabel('Log-Loss')
+plt.title('In-play classification log-loss per game phase')
+plt.savefig('inplay_logloss_per_phase.png')
+
+# Compute MAE per phase
+bins, mae_per_phase = eval_per_minute(best_reg, X_snap_test, y_snap_test_reg, snap_times_test, mae_per_phase)
+plt.figure()
+plt.plot(bins+7.5, mae_per_phase, marker='o')
+plt.xlabel('Match minute (phase)')
+plt.ylabel('MAE')
+plt.title('In-play regression MAE per game phase')
+plt.savefig('inplay_mae_per_phase.png')
+
+# Also plot metric vs minute for continuous bins (e.g., every 5 min)
+# We can use the snapshot times directly.
+
+# PART 7 Done (in-play evaluation)
