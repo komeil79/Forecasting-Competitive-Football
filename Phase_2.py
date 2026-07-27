@@ -64,6 +64,8 @@ from IFX_model import IFX_XGBoost
 
 # -------------------- 1. Load Data --------------------
 DATA_DIR = "processed_data"  # adjust path if needed
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FIGURES_DIR = os.path.join(BASE_DIR, 'Forecasting-Competitive-Football\\figures')
 
 def load_data():
     """Load pre-match and snapshot datasets, and match info."""
@@ -518,7 +520,7 @@ plt.plot(bins + 7.5, ll_per_phase, marker='o')
 plt.xlabel('Match minute (phase)')
 plt.ylabel('Log-Loss')
 plt.title('In-play classification log-loss per game phase')
-plt.savefig('inplay_logloss_per_phase.png')
+plt.savefig(os.path.join(FIGURES_DIR, 'inplay_logloss_per_phase.png'))
 plt.close()
 
 # MAE per phase (regression)
@@ -528,7 +530,7 @@ plt.plot(bins + 7.5, mae_per_phase, marker='o')
 plt.xlabel('Match minute (phase)')
 plt.ylabel('MAE')
 plt.title('In-play regression MAE per game phase')
-plt.savefig('inplay_mae_per_phase.png')
+plt.savefig(os.path.join(FIGURES_DIR, 'inplay_mae_per_phase.png'))
 plt.close()
 
 print("Part 7 done: per‑phase evaluation plots saved.")
