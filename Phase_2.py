@@ -534,3 +534,65 @@ plt.savefig(os.path.join(FIGURES_DIR, 'inplay_mae_per_phase.png'))
 plt.close()
 
 print("Part 7 done: per‑phase evaluation plots saved.")
+
+# -------------------- 8. Compute Cost & Kernel Scaling Analysis --------------------
+# We'll measure wall-clock time and peak memory for each model on the full training set.
+# We'll also demonstrate O(n^2) scaling of kernel methods by training on increasing subsets.
+
+def measure_training(model, X, y):
+    """Fit model and return time and memory."""
+    process = psutil.Process()
+    mem_before = process.memory_info().rss / 1024**2  # MB
+    start = time.time()
+    model.fit(X, y)
+    end = time.time()
+    mem_after = process.memory_info().rss / 1024**2
+    return end-start, mem_after - mem_before
+
+# We'll measure for a few models on pre-match training set.
+# We'll also do kernel scaling by varying dataset size.
+subsample_sizes = [100, 500, 1000, 2000, 5000]
+kernel_times = []
+for n in subsample_sizes:
+    if n > len(X_pre_train):
+        break
+    X_sub = X_pre_train[:n]
+    y_sub = y_pre_train_reg[:n]
+    model = KernelRidge(alpha=1.0, kernel='rbf')
+    t, _ = measure_training(model, X_sub, y_sub)
+    kernel_times.append(t)
+    gc.collect()
+
+plt.figure()
+plt.plot(subsample_sizes[:len(kernel_times)], kernel_times, marker='o')
+plt.xlabel('Training sample size')
+plt.ylabel('Time (seconds)')
+plt.title('Kernel Ridge scaling (O(n^2))')
+plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling.png'))
+
+# Approximate kernel scaling (Nystroem)
+approx_times = []
+for n in subsample_sizes:
+    if n > len(X_pre_train):
+        break
+    X_sub = X_pre_train[:n]
+    y_sub = y_pre_train_reg[:n]
+    pipe = Pipeline([
+        ('scaler', StandardScaler()),
+        ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=42)),
+        ('reg', Ridge(alpha=1.0))
+    ])
+    t, _ = measure_training(pipe, X_sub, y_sub)
+    approx_times.append(t)
+
+plt.figure()
+plt.plot(subsample_sizes[:len(kernel_times)], kernel_times, marker='o', label='Exact KernelRidge')
+plt.plot(subsample_sizes[:len(approx_times)], approx_times, marker='s', label='Approx (Nystroem+Ridge)')
+plt.xlabel('Training sample size')
+plt.ylabel('Time (seconds)')
+plt.title('Kernel Scaling: Exact vs. Approximate')
+plt.legend()
+plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling_comparison.png'))
+plt.close()
+
+# PART 8 Done (compute & scaling)
