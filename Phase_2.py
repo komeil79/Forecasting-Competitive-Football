@@ -596,3 +596,35 @@ plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling_comparison.png'))
 plt.close()
 
 # PART 8 Done (compute & scaling)
+
+# -------------------- 9. SHAP Analysis (Preliminary) --------------------
+# We'll use a pre‑match classification model for SHAP (18 features).
+# Retrain a simple XGBoost on pre‑match data (no tuning, just for demonstration).
+shap_model = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
+shap_model.fit(X_pre_train, y_pre_train_cls)
+
+# SHAP on first 100 test samples (to keep runtime manageable)
+explainer = shap.TreeExplainer(shap_model)
+shap_values = explainer.shap_values(X_pre_test[:100])
+
+# Global summary plot (beeswarm)
+shap.summary_plot(shap_values, X_pre_test[:100], feature_names=pre_feat_cols, show=False)
+plt.savefig(os.path.join(FIGURES_DIR, 'shap_summary.png'))
+plt.close()
+
+# ----- Local waterfall plot for the first test sample (predicted class) -----
+# Get predicted class for the first sample
+pred_class = np.argmax(shap_model.predict_proba(X_pre_test[:1])[0])
+# Create a shap.Explanation object for that class
+explanation = shap.Explanation(
+    values=shap_values[pred_class][0],
+    base_values=explainer.expected_value[pred_class],
+    data=X_pre_test[0],
+    feature_names=pre_feat_cols
+)
+shap.plots.waterfall(explanation, show=False)
+plt.savefig(os.path.join(FIGURES_DIR, 'shap_waterfall.png'))
+plt.close()
+
+print("SHAP preliminary analysis complete. Plots saved.")
+# PART 9 Done
