@@ -379,40 +379,41 @@ for name, (model, param_grid) in reg_models.items():
     res = evaluate_regressor(best_model, X_pre_test, y_pre_test_reg)
     res['model'] = name
     results_reg.append(res)
+# ======================================================================
+# IN-PLAY LOOPS + PART 7
+# ======================================================================
 
-# In-play classification (model 3)
-# We'll train on snapshot data, but we must respect match-level splitting.
-# Already done by using separate train/val/test snapshots.
-# In-play classification loop (replace the existing one)
+# -------------------- In-Play Classification Loop --------------------
+best_inplay_clf = None
+best_inplay_reg = None
+best_inplay_clf_score = np.inf   # validation log-loss (lower is better)
+best_inplay_reg_score = np.inf   # validation MAE (lower is better)
+
 for name, (model, param_grid) in clf_models.items():
     print(f"Training {name} (in-play classification)...")
     if name == 'IFX-XGBoost':
         model = IFX_XGBoost(random_state=42, n_iterations=3)
         model.fit(X_snap_train, y_snap_train_cls, X_snap_val, y_snap_val_cls)
         best_model = model
+        # Compute validation log-loss for IFX
+        val_probs = model.predict_proba(X_snap_val)
+        val_score = log_loss(y_snap_val_cls, val_probs)
     elif name in ['KernelSVM', 'KernelRidge']:
-        # Use approximate kernel for large dataset
         print(f"   ***Using Nystroem approximation for {name} (large dataset)***")
-        if name == 'KernelSVM':
-            approx_model = make_approx_kernel_pipeline('classification')
-        else:
-            # For KernelRidge we also use approximation
-            approx_model = make_approx_kernel_pipeline('classification')
-        # We'll use a simple grid for the approximate model (SGDClassifier)
-        param_grid_adj = {
-            'clf__alpha': [0.0001, 0.001, 0.01],
-            'kernel_approx__n_components': [50, 100, 200]
-        }
         pipe = Pipeline([
             ('scaler', StandardScaler()),
             ('kernel_approx', Nystroem(kernel='rbf', random_state=42)),
             ('clf', SGDClassifier(loss='log_loss', random_state=42, max_iter=1000, tol=1e-3))
         ])
+        param_grid_adj = {
+            'clf__alpha': [0.0001, 0.001, 0.01],
+            'kernel_approx__n_components': [50, 100, 200]
+        }
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_cls)
         best_model = gs.best_estimator_
+        val_score = -gs.best_score_   # because scoring is neg_log_loss
     else:
-        # Non‑kernel models: use PF‑SMOTE pipeline as before
         pipe = create_clf_pipeline(model, use_pf_smote=True, scaler=True)
         param_grid_adj = {}
         for k, v in param_grid.items():
@@ -420,7 +421,12 @@ for name, (model, param_grid) in clf_models.items():
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_cls)
         best_model = gs.best_estimator_
-    # Evaluate
+        val_score = -gs.best_score_
+    # Store if best so far
+    if val_score < best_inplay_clf_score:
+        best_inplay_clf_score = val_score
+        best_inplay_clf = best_model
+    # Evaluate on test
     res = evaluate_classifier(best_model, X_snap_train, y_snap_train_cls,
                               X_snap_test, y_snap_test_cls,
                               model_name=name, task='inplay_cls',
@@ -428,17 +434,17 @@ for name, (model, param_grid) in clf_models.items():
     res['model'] = name
     results_cls.append(res)
 
-# In-play regression
-# In-play regression loop
+# -------------------- In-Play Regression Loop --------------------
 for name, (model, param_grid) in reg_models.items():
     print(f"Training {name} (in-play regression)...")
     if name == 'IFX-XGBoost':
         model = IFX_XGBoost(random_state=42, n_iterations=3, objective='reg:squarederror')
         model.fit(X_snap_train, y_snap_train_reg, X_snap_val, y_snap_val_reg)
         best_model = model
+        val_preds = model.predict(X_snap_val)
+        val_score = mean_absolute_error(y_snap_val_reg, val_preds)
     elif name in ['KernelRidge', 'KernelSVR']:
         print(f"   ***Using Nystroem approximation for {name} (large dataset)***")
-        # Build approximate pipeline for regression
         pipe = Pipeline([
             ('scaler', StandardScaler()),
             ('kernel_approx', Nystroem(kernel='rbf', random_state=42)),
@@ -451,8 +457,8 @@ for name, (model, param_grid) in reg_models.items():
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_mean_absolute_error', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_reg)
         best_model = gs.best_estimator_
+        val_score = -gs.best_score_
     else:
-        # Non‑kernel models: standard pipeline with scaling
         pipe = Pipeline([('scaler', StandardScaler()), ('reg', model)])
         param_grid_adj = {}
         for k, v in param_grid.items():
@@ -460,6 +466,12 @@ for name, (model, param_grid) in reg_models.items():
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_mean_absolute_error', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_reg)
         best_model = gs.best_estimator_
+        val_score = -gs.best_score_
+    # Store if best so far
+    if val_score < best_inplay_reg_score:
+        best_inplay_reg_score = val_score
+        best_inplay_reg = best_model
+    # Evaluate on test
     res = evaluate_regressor(best_model, X_snap_test, y_snap_test_reg)
     res['model'] = name
     results_reg.append(res)
@@ -474,10 +486,13 @@ print(df_reg_results)
 
 # PART 6 Done (all models trained and evaluated)
 
-# -------------------- 7. In-Play Evaluation: Metric vs Minute & Per-Phase Calibration --------------------
+# ======================================================================
+# PART 7: IN-PLAY EVALUATION (USING THE BEST MODELS)
+# ======================================================================
+
 def eval_per_minute_cls(model, X, y, times):
     """Compute log-loss per 15-minute phase for classification."""
-    bins = np.arange(0, 95, 15)  # 0-15, 15-30, ..., 75-90+
+    bins = np.arange(0, 95, 15)
     metrics = []
     for i in range(len(bins)-1):
         mask = (times >= bins[i]) & (times < bins[i+1])
@@ -502,38 +517,144 @@ def eval_per_minute_reg(model, X, y, times):
     return bins[:-1], metrics
 
 # ----------------------------------------------------------------------
-# Use the best models from the in-play training loops (if you stored them)
-# or retrain simple ones (we'll retrain for clarity).
+# 7a. Per-phase metrics for the best in-play models
 # ----------------------------------------------------------------------
-
-# Retrain simple XGBoost models (you can also use the best models from earlier)
-best_clf = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
-best_clf.fit(X_snap_train, y_snap_train_cls)
-
-best_reg = XGBRegressor(random_state=42, n_estimators=100, learning_rate=0.1)
-best_reg.fit(X_snap_train, y_snap_train_reg)
+# Use the best models stored during loops (or fallback to retrained XGBoost)
+if best_inplay_clf is None:
+    # Fallback: retrain a simple XGBoost (should not happen)
+    best_inplay_clf = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
+    best_inplay_clf.fit(X_snap_train, y_snap_train_cls)
+if best_inplay_reg is None:
+    best_inplay_reg = XGBRegressor(random_state=42, n_estimators=100, learning_rate=0.1)
+    best_inplay_reg.fit(X_snap_train, y_snap_train_reg)
 
 # Log-loss per phase (classification)
-bins, ll_per_phase = eval_per_minute_cls(best_clf, X_snap_test, y_snap_test_cls, snap_times_test)
+bins, ll_per_phase = eval_per_minute_cls(best_inplay_clf, X_snap_test, y_snap_test_cls, snap_times_test)
 plt.figure()
-plt.plot(bins + 7.5, ll_per_phase, marker='o')
+plt.plot(bins + 7.5, ll_per_phase, marker='o', label='In-play (best model)')
 plt.xlabel('Match minute (phase)')
 plt.ylabel('Log-Loss')
 plt.title('In-play classification log-loss per game phase')
+plt.legend()
 plt.savefig(os.path.join(FIGURES_DIR, 'inplay_logloss_per_phase.png'))
 plt.close()
 
 # MAE per phase (regression)
-bins, mae_per_phase = eval_per_minute_reg(best_reg, X_snap_test, y_snap_test_reg, snap_times_test)
+bins, mae_per_phase = eval_per_minute_reg(best_inplay_reg, X_snap_test, y_snap_test_reg, snap_times_test)
 plt.figure()
-plt.plot(bins + 7.5, mae_per_phase, marker='o')
+plt.plot(bins + 7.5, mae_per_phase, marker='o', label='In-play (best model)')
 plt.xlabel('Match minute (phase)')
 plt.ylabel('MAE')
 plt.title('In-play regression MAE per game phase')
+plt.legend()
 plt.savefig(os.path.join(FIGURES_DIR, 'inplay_mae_per_phase.png'))
 plt.close()
 
-print("Part 7 done: per‑phase evaluation plots saved.")
+# ----------------------------------------------------------------------
+# 7b. Frozen pre-match baseline (using the best pre-match model)
+# ----------------------------------------------------------------------
+# Train a pre-match model (we can use XGBoost with default params)
+pre_model = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
+pre_model.fit(X_pre_train, y_pre_train_cls)
+pre_reg = XGBRegressor(random_state=42, n_estimators=100, learning_rate=0.1)
+pre_reg.fit(X_pre_train, y_pre_train_reg)
+
+# Map each snapshot's match_id to its pre-match feature vector
+# Use test_pre to get the features
+test_pre_feat = test_pre[pre_feat_cols].values
+test_pre_ids = test_pre['match_id'].values
+pre_feat_dict = dict(zip(test_pre_ids, test_pre_feat))
+
+snap_ids = test_snap['match_id'].values
+pre_feat_for_snap = np.array([pre_feat_dict[mid] for mid in snap_ids])
+
+# Pre-match predictions (probabilities and margin)
+pre_prob = pre_model.predict_proba(pre_feat_for_snap)
+pre_margin = pre_reg.predict(pre_feat_for_snap)
+
+# Compute log-loss per phase for pre-match baseline
+def eval_per_minute_probs(probs, y, times):
+    bins = np.arange(0, 95, 15)
+    metrics = []
+    for i in range(len(bins)-1):
+        mask = (times >= bins[i]) & (times < bins[i+1])
+        if np.sum(mask) == 0:
+            metrics.append(np.nan)
+        else:
+            metrics.append(log_loss(y[mask], probs[mask]))
+    return bins[:-1], metrics
+
+bins, ll_pre = eval_per_minute_probs(pre_prob, y_snap_test_cls, snap_times_test)
+
+# Plot both curves (in-play vs frozen pre-match)
+plt.figure()
+plt.plot(bins + 7.5, ll_per_phase, marker='o', label='In-play (best model)')
+plt.plot(bins + 7.5, ll_pre, marker='s', label='Frozen pre-match')
+plt.xlabel('Match minute (phase)')
+plt.ylabel('Log-Loss')
+plt.title('In-play classification: In-play vs Frozen Pre-match')
+plt.legend()
+plt.savefig(os.path.join(FIGURES_DIR, 'inplay_vs_pre_logloss.png'))
+plt.close()
+
+# For regression, compute MAE per phase for pre-match
+def eval_per_minute_preds(preds, y, times):
+    bins = np.arange(0, 95, 15)
+    metrics = []
+    for i in range(len(bins)-1):
+        mask = (times >= bins[i]) & (times < bins[i+1])
+        if np.sum(mask) == 0:
+            metrics.append(np.nan)
+        else:
+            metrics.append(mean_absolute_error(y[mask], preds[mask]))
+    return bins[:-1], metrics
+
+bins, mae_pre = eval_per_minute_preds(pre_margin, y_snap_test_reg, snap_times_test)
+
+plt.figure()
+plt.plot(bins + 7.5, mae_per_phase, marker='o', label='In-play (best model)')
+plt.plot(bins + 7.5, mae_pre, marker='s', label='Frozen pre-match')
+plt.xlabel('Match minute (phase)')
+plt.ylabel('MAE')
+plt.title('In-play regression: In-play vs Frozen Pre-match')
+plt.legend()
+plt.savefig(os.path.join(FIGURES_DIR, 'inplay_vs_pre_mae.png'))
+plt.close()
+
+# ----------------------------------------------------------------------
+# 7c. Reliability diagrams for the best classification model
+# ----------------------------------------------------------------------
+from sklearn.calibration import calibration_curve
+
+def plot_reliability_diagram(y_true, y_prob, model_name, task, n_bins=10):
+    fig, axes = plt.subplots(1, y_prob.shape[1], figsize=(4*y_prob.shape[1], 4))
+    if y_prob.shape[1] == 1:
+        axes = [axes]
+    for i, ax in enumerate(axes):
+        fraction_of_positives, mean_predicted_value = calibration_curve(
+            (y_true == i).astype(int), y_prob[:, i], n_bins=n_bins
+        )
+        ax.plot(mean_predicted_value, fraction_of_positives, "s-", label="Model")
+        ax.plot([0, 1], [0, 1], "k--", label="Perfect")
+        ax.set_xlabel("Mean predicted probability")
+        ax.set_ylabel("Fraction of positives")
+        ax.set_title(f"Class {i}")
+        ax.legend()
+    plt.suptitle(f"Reliability diagram – {model_name} ({task})")
+    plt.savefig(os.path.join(FIGURES_DIR, f'reliability_{model_name}_{task}.png'))
+    plt.close()
+
+# Get probabilities from the best in-play classifier on test set
+best_probs = best_inplay_clf.predict_proba(X_snap_test)
+plot_reliability_diagram(y_snap_test_cls, best_probs, 
+                         model_name='Best In-play Classifier', task='inplay')
+
+# Also for the pre-match classifier (optional)
+pre_probs = pre_model.predict_proba(X_pre_test)
+plot_reliability_diagram(y_pre_test_cls, pre_probs,
+                         model_name='Best Pre-match Classifier', task='pre')
+
+print("Part 7 done: per-phase evaluation, frozen baseline comparison, and reliability diagrams saved.")
 
 # -------------------- 8. Compute Cost & Kernel Scaling Analysis --------------------
 # We'll measure wall-clock time and peak memory for each model on the full training set.
