@@ -243,70 +243,75 @@ from sklearn.isotonic import IsotonicRegression
 
 def evaluate_classifier(model, X_train, y_train, X_test, y_test, model_name, task, calibrate=True, X_cal=None, y_cal=None):
     """
-    Fit model (if not already fitted) and evaluate on test set.
-    If calibrate=True and calibration data provided, fit a Platt calibrator
-    on the model's predicted probabilities and apply to test.
+    Evaluate classifier on test set.
+    Returns both uncalibrated and calibrated metrics (if calibrate=True).
     """
-    # If model is not fitted, fit it (only for non-IFX models; IFX already fitted)
-    if not hasattr(model, 'model') and not hasattr(model, 'predict_proba'):
-        # fallback: maybe model is already fitted
-        pass
+    # Get raw (uncalibrated) probabilities on test set
+    probs_uncal = model.predict_proba(X_test)
+    n_classes = probs_uncal.shape[1]
 
-    # Get raw probabilities on calibration and test sets
-    if X_cal is not None:
-        probs_cal = model.predict_proba(X_cal)
-    else:
-        probs_cal = None
-    
-    probs_test = model.predict_proba(X_test)
-    
-    if calibrate and probs_cal is not None and y_cal is not None:
-        # Fit Platt scaling (LogisticRegression) on calibration probabilities
-        # For multi-class, we need a one-vs-rest calibration (or use CalibratedClassifierCV with cv='prefit')
-        # Since we have a separate calibration set, we can use CalibratedClassifierCV with cv='prefit' if sklearn version supports it.
-        # Alternatively, we fit a LogisticRegression on the logits for each class (Platt scaling)
-        # For simplicity, we'll use CalibratedClassifierCV with cv='prefit' if available, else we'll use a simple method.
-        try:
-            from sklearn.calibration import CalibratedClassifierCV
-            # Use cv='prefit' (requires sklearn >= 0.24)
-            calibrator = CalibratedClassifierCV(estimator=model, method='sigmoid', cv='prefit')
-            calibrator.fit(X_cal, y_cal)
-            probs_test = calibrator.predict_proba(X_test)
-        except (ValueError, TypeError, AttributeError):
-            # If cv='prefit' not supported, fallback to LogisticRegression on predicted probabilities
-            # For each class, fit a logistic regression on the predicted probability of that class
-            n_classes = probs_cal.shape[1]
-            calibrated_probs = np.zeros_like(probs_test)
-            for i in range(n_classes):
-                # Fit a logistic regression on the logit of the probability? 
-                # Simpler: use IsotonicRegression
-                iso = IsotonicRegression(out_of_bounds='clip')
-                iso.fit(probs_cal[:, i], (y_cal == i).astype(int))
-                calibrated_probs[:, i] = iso.predict(probs_test[:, i])
-            # Normalize to sum to 1
-            calibrated_probs = calibrated_probs / calibrated_probs.sum(axis=1, keepdims=True)
-            probs_test = calibrated_probs
-    else:
-        # No calibration
-        pass
-
-    # Compute metrics
-    n_classes = probs_test.shape[1]
-    ll = log_loss(y_test, probs_test)
-    brier = np.mean([brier_score_loss((y_test == i).astype(int), probs_test[:, i]) for i in range(n_classes)])
-    ece = np.mean([compute_ece((y_test == i).astype(int), probs_test[:, i]) for i in range(n_classes)])
-    # RPS
+    # ----- Uncalibrated metrics -----
+    ll_uncal = log_loss(y_test, probs_uncal)
+    brier_uncal = np.mean([brier_score_loss((y_test == i).astype(int), probs_uncal[:, i]) for i in range(n_classes)])
+    ece_uncal = np.mean([compute_ece((y_test == i).astype(int), probs_uncal[:, i]) for i in range(n_classes)])
+    # RPS (uncalibrated)
     rps_list = []
     for i in range(len(y_test)):
         true_label = y_test[i]
-        cum_pred = np.cumsum(probs_test[i, :])
+        cum_pred = np.cumsum(probs_uncal[i, :])
         cum_true = np.zeros(n_classes)
         cum_true[true_label:] = 1
         rps_list.append(np.sum((cum_pred[:-1] - cum_true[:-1]) ** 2))
-    rps = np.mean(rps_list)
-    acc = accuracy_score(y_test, np.argmax(probs_test, axis=1))
-    
-    return {'log_loss': ll, 'brier': brier, 'ece': ece, 'rps': rps, 'accuracy': acc}
+    rps_uncal = np.mean(rps_list)
+    acc_uncal = accuracy_score(y_test, np.argmax(probs_uncal, axis=1))
+
+    # ----- Calibrated probabilities (if requested) -----
+    if calibrate and X_cal is not None and y_cal is not None:
+        try:
+            from sklearn.calibration import CalibratedClassifierCV
+            calibrator = CalibratedClassifierCV(estimator=model, method='sigmoid', cv='prefit')
+            calibrator.fit(X_cal, y_cal)
+            probs_cal = calibrator.predict_proba(X_test)
+        except (ValueError, TypeError, AttributeError):
+            # Fallback: Isotonic per class
+            probs_cal = model.predict_proba(X_cal)  # on calibration set
+            calibrated_probs = np.zeros_like(probs_uncal)
+            for i in range(n_classes):
+                iso = IsotonicRegression(out_of_bounds='clip')
+                iso.fit(probs_cal[:, i], (y_cal == i).astype(int))
+                calibrated_probs[:, i] = iso.predict(probs_uncal[:, i])
+            probs_cal = calibrated_probs / calibrated_probs.sum(axis=1, keepdims=True)
+    else:
+        probs_cal = probs_uncal  # use uncalibrated if calibration not performed
+
+    # ----- Calibrated metrics -----
+    ll_cal = log_loss(y_test, probs_cal)
+    brier_cal = np.mean([brier_score_loss((y_test == i).astype(int), probs_cal[:, i]) for i in range(n_classes)])
+    ece_cal = np.mean([compute_ece((y_test == i).astype(int), probs_cal[:, i]) for i in range(n_classes)])
+    rps_list_cal = []
+    for i in range(len(y_test)):
+        true_label = y_test[i]
+        cum_pred = np.cumsum(probs_cal[i, :])
+        cum_true = np.zeros(n_classes)
+        cum_true[true_label:] = 1
+        rps_list_cal.append(np.sum((cum_pred[:-1] - cum_true[:-1]) ** 2))
+    rps_cal = np.mean(rps_list_cal)
+    acc_cal = accuracy_score(y_test, np.argmax(probs_cal, axis=1))
+
+    return {
+        # Uncalibrated
+        'log_loss_uncal': ll_uncal,
+        'brier_uncal': brier_uncal,
+        'ece_uncal': ece_uncal,
+        'rps_uncal': rps_uncal,
+        'accuracy_uncal': acc_uncal,
+        # Calibrated
+        'log_loss': ll_cal,
+        'brier': brier_cal,
+        'ece': ece_cal,
+        'rps': rps_cal,
+        'accuracy': acc_cal
+    }
 
 def evaluate_regressor(model, X, y_true):
     y_pred = model.predict(X)
@@ -749,3 +754,4 @@ plt.close()
 
 print("SHAP preliminary analysis complete. Plots saved.")
 # PART 9 Done
+
