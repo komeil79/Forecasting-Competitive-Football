@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import xgboost as xgb
 
 from sklearn.kernel_approximation import RBFSampler, Nystroem
 from sklearn.linear_model import Ridge, SGDClassifier, SGDRegressor
@@ -755,3 +756,149 @@ plt.close()
 print("SHAP preliminary analysis complete. Plots saved.")
 # PART 9 Done
 
+# ----- Worst prediction alanysis -----
+def worst_predictions_analysis(model, X, y_true, feature_names, model_name, task, top_k=10):
+    """
+    Identify the top_k worst predictions and save SHAP explanations.
+    Handles plain models, pipelines, and IFX_XGBoost wrappers.
+    """
+    # Keep the original model for predictions (handles numpy arrays)
+    pred_model = model
+
+    # Extract the underlying tree model for SHAP
+    shap_model = None
+    if hasattr(model, 'model') and isinstance(model.model, xgb.Booster):
+        # IFX_XGBoost
+        shap_model = model.model
+    elif hasattr(model, 'steps'):
+        # Pipeline: take the last estimator
+        last_est = model.steps[-1][1]
+        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
+            shap_model = last_est.model
+        else:
+            shap_model = last_est
+    elif hasattr(model, 'named_steps'):
+        # Imblearn pipeline
+        last_est = model.named_steps[list(model.named_steps.keys())[-1]]
+        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
+            shap_model = last_est.model
+        else:
+            shap_model = last_est
+    else:
+        shap_model = model
+
+    # Determine worst indices using the prediction model
+    if task == 'classification':
+        probs = pred_model.predict_proba(X)
+        per_sample_ll = [-np.log(probs[i, y_true[i]]) for i in range(len(y_true))]
+        worst_idx = np.argsort(per_sample_ll)[-top_k:]
+        worst_scores = [per_sample_ll[i] for i in worst_idx]
+    else:  # regression
+        preds = pred_model.predict(X)
+        errors = np.abs(y_true - preds)
+        worst_idx = np.argsort(errors)[-top_k:]
+        worst_scores = [errors[i] for i in worst_idx]
+
+    # Compute SHAP using the extracted tree model
+    explainer = shap.TreeExplainer(shap_model)
+    shap_values = explainer.shap_values(X[worst_idx])
+
+    for j, idx in enumerate(worst_idx):
+        sample = X[idx]
+        true_label = y_true[idx]
+        score = worst_scores[j]
+
+        if task == 'classification':
+            pred_class = np.argmax(pred_model.predict_proba([sample])[0])
+
+            if isinstance(shap_values, list):
+                # List of arrays (one per class)
+                class_shap = shap_values[pred_class][j]
+                base = explainer.expected_value[pred_class]
+            elif hasattr(shap_values, 'ndim') and shap_values.ndim == 3:
+                # 3D array: (samples, features, classes)
+                class_shap = shap_values[j, :, pred_class]
+                base = explainer.expected_value[pred_class]
+            else:
+                # Binary / fallback
+                class_shap = shap_values[j]
+                base = explainer.expected_value
+
+            explanation = shap.Explanation(
+                values=class_shap,
+                base_values=base,
+                data=sample,
+                feature_names=feature_names
+            )
+            shap.plots.waterfall(explanation, show=False)
+            plt.title(f"{model_name} - Sample {idx} (true={true_label}, pred={pred_class}, log-loss={score:.4f})")
+
+        else:  # regression
+            if isinstance(shap_values, list):
+                shap_vals = shap_values[0][j]
+            elif hasattr(shap_values, 'ndim') and shap_values.ndim == 2:
+                shap_vals = shap_values[j]
+            else:
+                shap_vals = shap_values[j]
+
+            explanation = shap.Explanation(
+                values=shap_vals,
+                base_values=explainer.expected_value,
+                data=sample,
+                feature_names=feature_names
+            )
+            shap.plots.waterfall(explanation, show=False)
+            plt.title(f"{model_name} - Sample {idx} (true={true_label}, pred={preds[idx]:.2f}, error={score:.2f})")
+
+        plt.tight_layout()
+        plt.savefig(os.path.join(FIGURES_DIR, f'worst_{j+1}_{model_name}_{task}.png'))
+        plt.close()
+
+    print(f"Saved {top_k} worst prediction plots for {model_name} ({task}).")
+
+# For the best in-play classifier (classification)
+worst_predictions_analysis(best_inplay_clf, X_snap_test, y_snap_test_cls,
+                           feature_names=snap_feat_cols,
+                           model_name='Best_Inplay_Classifier', task='classification')
+
+# For the best in-play regressor (regression)
+worst_predictions_analysis(best_inplay_reg, X_snap_test, y_snap_test_reg,
+                           feature_names=snap_feat_cols,
+                           model_name='Best_Inplay_Regressor', task='regression')
+
+# ======================================================================
+# RESAMPLING COMPARISON
+# ======================================================================
+from imblearn.over_sampling import SMOTE, BorderlineSMOTE, ADASYN
+
+resamplers = {
+    'None': None,
+    'PF-SMOTE': PF_SMOTE(random_state=42),
+    'SMOTE': SMOTE(random_state=42),
+    'BorderlineSMOTE': BorderlineSMOTE(random_state=42),
+    'ADASYN': ADASYN(random_state=42),
+}
+
+base_model = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
+resample_results = []
+
+for name, resampler in resamplers.items():
+    print(f"Training XGBoost with {name} resampling (pre-match classification)...")
+    steps = [('scaler', StandardScaler())]
+    if resampler is not None:
+        steps.append(('resampler', resampler))
+    steps.append(('clf', base_model))
+    pipe = ImbPipeline(steps)
+    pipe.fit(X_pre_train, y_pre_train_cls)
+
+    res = evaluate_classifier(pipe, X_pre_train, y_pre_train_cls,
+                              X_pre_test, y_pre_test_cls,
+                              model_name=name, task='resample_compare',
+                              calibrate=True, X_cal=X_pre_val, y_cal=y_pre_val_cls)
+    res['resampler'] = name
+    resample_results.append(res)
+
+df_resample = pd.DataFrame(resample_results)
+print("Resampling comparison results:")
+print(df_resample[['resampler', 'log_loss', 'rps', 'accuracy', 'ece']])
+df_resample.to_csv('resampling_comparison.csv', index=False)
