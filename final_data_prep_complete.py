@@ -224,7 +224,6 @@ def load_events_for_match(match_id):
         return pd.DataFrame()
 
 def create_snapshots_for_match(match_id, df_matches, interval=5):
-    """ایجاد عکس‌برداری‌های حین بازی با مدیریت Missing Values در محاسبات"""
     match_events = load_events_for_match(match_id)
     if match_events.empty:
         return pd.DataFrame()
