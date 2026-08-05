@@ -64,7 +64,7 @@ class IFX_XGBoost(BaseEstimator):
                 if self.eval_metric is None:
                     self.eval_metric = 'logloss'
             else:
-                # Regression (e.g., 'reg:squarederror')
+                # Regression
                 if self.eval_metric is None:
                     self.eval_metric = 'rmse'
         else:

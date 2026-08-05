@@ -36,7 +36,7 @@ class PF_SMOTE:
         if n_min == 0 or n_maj == 0:
             raise ValueError("Both classes must be present.")
         
-        # Determine effective k (parameter‑free: use sqrt(n_min) if not specified)
+        # Determine effective k
         if self.k_neighbors is None:
             k = int(np.sqrt(n_min))
         else:
