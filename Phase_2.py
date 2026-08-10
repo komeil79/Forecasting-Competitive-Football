@@ -902,3 +902,137 @@ df_resample = pd.DataFrame(resample_results)
 print("Resampling comparison results:")
 print(df_resample[['resampler', 'log_loss', 'rps', 'accuracy', 'ece']])
 df_resample.to_csv('resampling_comparison.csv', index=False)
+
+# ======================================================================
+# SHAP TIMELINE FOR A SINGLE MATCH (Corrected)
+# ======================================================================
+
+def shap_timeline_for_match(match_id, clf_model, reg_model, test_snap_full, y_cls, y_reg, feature_names, fig_dir):
+    """
+    Generate SHAP timeline for a single match.
+    Extracts the underlying tree model from pipelines and IFX wrappers.
+    """
+    # Filter snapshots for this match
+    match_snap = test_snap_full[test_snap_full['match_id'] == match_id].copy()
+    if match_snap.empty:
+        print(f"No snapshots found for match {match_id}")
+        return
+
+    # Sort by time
+    match_snap = match_snap.sort_values('snapshot_time')
+    times = match_snap['snapshot_time'].values
+    X_snap = match_snap[feature_names].values
+
+    # ---------- Extract SHAP model from classifier ----------
+    shap_clf = None
+    if hasattr(clf_model, 'model') and isinstance(clf_model.model, xgb.Booster):
+        shap_clf = clf_model.model
+    elif hasattr(clf_model, 'steps'):
+        last_est = clf_model.steps[-1][1]
+        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
+            shap_clf = last_est.model
+        else:
+            shap_clf = last_est
+    elif hasattr(clf_model, 'named_steps'):
+        last_est = clf_model.named_steps[list(clf_model.named_steps.keys())[-1]]
+        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
+            shap_clf = last_est.model
+        else:
+            shap_clf = last_est
+    else:
+        shap_clf = clf_model
+
+    # ---------- Extract SHAP model from regressor ----------
+    shap_reg = None
+    if hasattr(reg_model, 'model') and isinstance(reg_model.model, xgb.Booster):
+        shap_reg = reg_model.model
+    elif hasattr(reg_model, 'steps'):
+        last_est = reg_model.steps[-1][1]
+        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
+            shap_reg = last_est.model
+        else:
+            shap_reg = last_est
+    elif hasattr(reg_model, 'named_steps'):
+        last_est = reg_model.named_steps[list(reg_model.named_steps.keys())[-1]]
+        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
+            shap_reg = last_est.model
+        else:
+            shap_reg = last_est
+    else:
+        shap_reg = reg_model
+
+    # ---------- Compute SHAP for classification (predicted class) ----------
+    explainer_clf = shap.TreeExplainer(shap_clf)
+    shap_values_clf = explainer_clf.shap_values(X_snap)
+
+    # Predict classes using the original model (handles numpy arrays)
+    pred_classes = clf_model.predict(X_snap)
+    shap_class_vals = []
+    for i, cls in enumerate(pred_classes):
+        if isinstance(shap_values_clf, list):
+            shap_class_vals.append(shap_values_clf[cls][i])
+        elif hasattr(shap_values_clf, 'ndim') and shap_values_clf.ndim == 3:
+            shap_class_vals.append(shap_values_clf[i, :, cls])
+        else:
+            shap_class_vals.append(shap_values_clf[i])
+    shap_class_vals = np.array(shap_class_vals)  # (n_snapshots, n_features)
+
+    # ---------- Compute SHAP for regression ----------
+    explainer_reg = shap.TreeExplainer(shap_reg)
+    shap_values_reg = explainer_reg.shap_values(X_snap)
+
+    # ---------- Plot SHAP timeline (top 5 features) ----------
+    mean_abs_shap = np.mean(np.abs(shap_class_vals), axis=0)
+    top_n = 5
+    top_idx = np.argsort(mean_abs_shap)[-top_n:]
+    top_features = [feature_names[i] for i in top_idx]
+
+    plt.figure(figsize=(12, 6))
+    for i in top_idx:
+        plt.plot(times, shap_class_vals[:, i], marker='o', label=feature_names[i])
+    plt.xlabel('Match minute')
+    plt.ylabel('SHAP value (contribution to predicted class)')
+    plt.title(f'SHAP Timeline for Match {match_id} (Top {top_n} features)')
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(fig_dir, f'shap_timeline_{match_id}.png'))
+    plt.close()
+
+    # ---------- Waterfall plot at the middle snapshot ----------
+    mid_snapshot = len(times) // 2
+    snapshot_idx = mid_snapshot
+    pred_class = pred_classes[snapshot_idx]
+
+    if isinstance(shap_values_clf, list):
+        class_shap = shap_values_clf[pred_class][snapshot_idx]
+        base = explainer_clf.expected_value[pred_class]
+    elif hasattr(shap_values_clf, 'ndim') and shap_values_clf.ndim == 3:
+        class_shap = shap_values_clf[snapshot_idx, :, pred_class]
+        base = explainer_clf.expected_value[pred_class]
+    else:
+        class_shap = shap_values_clf[snapshot_idx]
+        base = explainer_clf.expected_value
+
+    explanation = shap.Explanation(
+        values=class_shap,
+        base_values=base,
+        data=X_snap[snapshot_idx],
+        feature_names=feature_names
+    )
+    shap.plots.waterfall(explanation, show=False)
+    plt.title(f'Match {match_id} at minute {times[snapshot_idx]} – Predicted class {pred_class}')
+    plt.savefig(os.path.join(fig_dir, f'shap_waterfall_{match_id}_min{int(times[snapshot_idx])}.png'))
+    plt.close()
+
+    print(f"SHAP timeline for match {match_id} saved.")
+
+# Example: pick a match from the test set (i.e. first one)
+example_match_id = test_pre['match_id'].iloc[0]
+shap_timeline_for_match(example_match_id,
+                        best_inplay_clf,
+                        best_inplay_reg,
+                        test_snap,       # full test snapshots DataFrame
+                        y_snap_test_cls,
+                        y_snap_test_reg,
+                        snap_feat_cols,
+                        FIGURES_DIR)
