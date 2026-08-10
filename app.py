@@ -126,7 +126,9 @@ explanation = shap.Explanation(
     feature_names=snap_feat_cols
 )
 
-# Plot waterfall
+# Generate waterfall plot
 fig, ax = plt.subplots()
-shap.plots.waterfall(explanation, show=False, ax=ax)
-st.pyplot(fig)
+shap.plots.waterfall(explanation, show=False)
+# Get the current figure and display
+fig.set_size_inches(6, 4)
+st.pyplot(plt.gcf())
