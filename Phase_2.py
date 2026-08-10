@@ -1036,3 +1036,30 @@ shap_timeline_for_match(example_match_id,
                         y_snap_test_reg,
                         snap_feat_cols,
                         FIGURES_DIR)
+
+# ======================================================================
+# SAVE BEST MODELS AND RELATED DATA
+# ======================================================================
+import joblib
+
+# Save the best in-play models
+joblib.dump(best_inplay_clf, 'best_inplay_clf.pkl')
+joblib.dump(best_inplay_reg, 'best_inplay_reg.pkl')
+
+# Save feature names and other metadata (for app to use)
+metadata = {
+    'pre_feat_cols': pre_feat_cols,
+    'snap_feat_cols': snap_feat_cols,
+    'test_snap': test_snap,      # full test snapshots DataFrame
+    'test_pre': test_pre,        # full test pre-match DataFrame
+    'y_snap_test_cls': y_snap_test_cls,
+    'y_snap_test_reg': y_snap_test_reg,
+}
+# We can't save large DataFrames in a pickle easily, so we save them as CSV
+test_snap.to_csv('test_snapshots_for_app.csv', index=False)
+test_pre.to_csv('test_prematch_for_app.csv', index=False)
+# Save y arrays as numpy
+np.save('y_snap_test_cls.npy', y_snap_test_cls)
+np.save('y_snap_test_reg.npy', y_snap_test_reg)
+
+print("Models and data saved for final defence.")
