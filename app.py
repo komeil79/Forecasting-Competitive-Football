@@ -19,7 +19,7 @@ try:
     best_inplay_clf = joblib.load('best_inplay_clf.pkl')
     best_inplay_reg = joblib.load('best_inplay_reg.pkl')
 except FileNotFoundError:
-    st.error("Models not found. Please run Phase_2.py first to save them.")
+    st.error("Models not found. Please run main.py first to save them.")
     st.stop()
 
 # Load test data
@@ -29,7 +29,7 @@ y_snap_test_cls = np.load('y_snap_test_cls.npy')
 y_snap_test_reg = np.load('y_snap_test_reg.npy')
 
 # Load feature names (you can also save them in a pickle)
-# For simplicity, we define them here (they should match Phase_2)
+# For simplicity, we define them here (they should match main)
 snap_feat_cols = [c for c in test_snap.columns if c not in 
                   ['match_id', 'snapshot_time', 'final_goal_diff', 'final_result']]
 pre_feat_cols = [c for c in test_pre.columns if c not in 
