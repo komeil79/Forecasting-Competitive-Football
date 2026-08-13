@@ -1,5 +1,5 @@
 """
-Odds Integration - Fixed Version
+Odds Integration
 --------------------------------
 Downloads odds for La Liga and Premier League,
 handles connection errors and messy CSV formats,
@@ -28,7 +28,7 @@ LEAGUE_CODES = {
     2:  'E0'    # Premier League
 }
 
-# Extended team name alias mapping (add more as needed)
+# Extended team name alias mapping
 TEAM_ALIASES = {
     'RC Deportivo La Coruña': 'Deportivo La Coruña',
     'Deportivo Alavés': 'Alaves',
@@ -93,7 +93,7 @@ TEAM_ALIASES = {
     'Leeds United': 'Leeds',
     'Brentford': 'Brentford',
     'Nottingham Forest': 'Nott\'m Forest',
-    'Nott\'m Forest': 'Nott\'m Forest',  # already covered
+    'Nott\'m Forest': 'Nott\'m Forest',
     'Man Utd': 'Man United',
     'Man City': 'Man City',
     'Nott\'m Forest': 'Nott\'m Forest',
@@ -114,7 +114,7 @@ def standardise_team_name(name):
     for suffix in [' FC', ' CF', ' United', ' City']:
         if name.endswith(suffix):
             name = name[:-len(suffix)]
-    # Return the cleaned name (still may need manual mapping)
+    # Return the cleaned name
     return name
 
 def season_code_from_year(year):
@@ -183,7 +183,7 @@ def parse_odds_df(file_path):
     required = ['Date', 'HomeTeam', 'AwayTeam', 'B365H', 'B365D', 'B365A']
     missing = [col for col in required if col not in df.columns]
     if missing:
-        # If missing Bet365 odds, we could try average odds, but we'll skip.
+        # If missing Bet365 odds we'll skip.
         print(f"   Missing columns: {missing}. Skipping file.")
         return None
 

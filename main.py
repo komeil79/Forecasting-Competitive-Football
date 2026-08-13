@@ -82,10 +82,9 @@ def load_data():
 (train_pre, val_pre, test_pre), (train_snap, val_snap, test_snap) = load_data()
 print("Data loaded. Pre-match train shape:", train_pre.shape)
 print("Snapshots train shape:", train_snap.shape)
-# PART 1 Done
 
 # -------------------- 2. Define Features & Targets --------------------
-# Pre-match classification features (exclude match_id, date, team names, label columns)
+# Pre-match classification features
 pre_feat_cols = [c for c in train_pre.columns if c not in 
                  ['match_id', 'match_date', 'home_team', 'away_team', 
                   'label_goal_diff', 'label_result']]
@@ -120,8 +119,6 @@ y_snap_test_reg = test_snap['final_goal_diff'].values
 snap_times_train = train_snap['snapshot_time'].values
 snap_times_test = test_snap['snapshot_time'].values
 
-# PART 2 Done
-
 # -------------------- 3. PF-SMOTE Integration (P1) --------------------
 # We'll use PF-SMOTE as a resampler in the classification pipeline.
 # For pre-match classification (Model 1) and in-play classification (Model 3).
@@ -137,12 +134,6 @@ def create_clf_pipeline(model, use_pf_smote=True, scaler=True):
         steps.append(('resampler', PF_SMOTE(random_state=42)))
     steps.append(('clf', model))
     return ImbPipeline(steps)
-
-# Example usage:
-# pipe = create_clf_pipeline(XGBClassifier(), use_pf_smote=True)
-# pipe.fit(X_pre_train, y_pre_train_cls)
-
-# PART 3 Done (integration logic defined)
 
 # -------------------- 4. Model Suite & Hyperparameter Tuning --------------------
 # We define a dictionary of model names and their parameter grids for tuning.
@@ -198,22 +189,14 @@ def tune_model(model, param_grid, X_train, y_train, X_val=None, scoring='neg_log
         # We'll pick a default set.
         return model
     # For other models, use GridSearchCV.
-    # We'll also include early stopping for XGBoost and LightGBM via callbacks?
+    # We'll also include early stopping for XGBoost and LightGBM
     # But we'll keep simple.
     from sklearn.model_selection import GridSearchCV
     if X_val is not None and hasattr(model, 'eval_set'):
-        # Some models can use eval_set for early stopping, but GridSearchCV doesn't support it directly.
-        # We'll just use CV.
         pass
     gs = GridSearchCV(model, param_grid, cv=3, scoring=scoring, n_jobs=-1, verbose=0)
     gs.fit(X_train, y_train)
     return gs.best_estimator_
-
-# We'll train all models on pre-match classification and regression,
-# and on in-play classification and regression. This will be a large loop.
-# We'll store results in a dictionary.
-
-# PART 4 Done (model definitions and tuning function)
 
 # -------------------- 5. Calibration & Metrics --------------------
 # We'll use Platt scaling (CalibratedClassifierCV with method='sigmoid')
@@ -237,9 +220,6 @@ def compute_ece(y_true, y_prob, n_bins=10):
     ece = np.sum(bin_counts * np.abs(bin_accuracy - bin_confidence)) / np.sum(bin_counts)
     return ece
 
-from sklearn.calibration import CalibratedClassifierCV
-
-from sklearn.linear_model import LogisticRegression
 from sklearn.isotonic import IsotonicRegression
 
 def evaluate_classifier(model, X_train, y_train, X_test, y_test, model_name, task, calibrate=True, X_cal=None, y_cal=None):
@@ -321,8 +301,6 @@ def evaluate_regressor(model, X, y_true):
     corr = np.corrcoef(y_true, y_pred)[0,1]
     return {'mae': mae, 'rmse': rmse, 'corr': corr}
 
-# PART 5 Done (calibration and metrics functions)
-
 # -------------------- 6. Run All Models (Pre-match and In-play) --------------------
 # We'll loop over the model dictionaries, fit, and evaluate.
 # We'll store results in a DataFrame for reporting.
@@ -334,21 +312,13 @@ results_reg = []
 for name, (model, param_grid) in clf_models.items():
     print(f"Training {name} (pre-match classification)...")
     if name == 'IFX-XGBoost':
-        # IFX needs validation set for early stopping and SHAP
-        # We'll set X_val = X_pre_val, y_val = y_pre_val_cls
-        # But we still need to tune? We'll just use default params.
         model = IFX_XGBoost(random_state=42, n_iterations=3,
                             objective='multi:softprob', num_class=3)
         model.fit(X_pre_train, y_pre_train_cls, X_pre_val, y_pre_val_cls)
         best_model = model
     else:
-        # For other models, we build a pipeline with PF-SMOTE and scaling.
-        # We'll use GridSearchCV to find best parameters.
         from sklearn.model_selection import GridSearchCV
         pipe = create_clf_pipeline(model, use_pf_smote=True, scaler=True)
-        # Since GridSearchCV doesn't handle imblearn Pipeline nicely, we'll use sklearn's Pipeline with PF_SMOTE as a custom transformer.
-        # Actually we can use ImbPipeline which is compatible.
-        # We'll use a simpler approach: define the pipeline with steps and use GridSearchCV.
         param_grid_adj = {}
         for k, v in param_grid.items():
             param_grid_adj['clf__' + k] = v
@@ -385,6 +355,8 @@ for name, (model, param_grid) in reg_models.items():
     res = evaluate_regressor(best_model, X_pre_test, y_pre_test_reg)
     res['model'] = name
     results_reg.append(res)
+
+
 # ======================================================================
 # IN-PLAY LOOPS + PART 7
 # ======================================================================
@@ -392,8 +364,8 @@ for name, (model, param_grid) in reg_models.items():
 # -------------------- In-Play Classification Loop --------------------
 best_inplay_clf = None
 best_inplay_reg = None
-best_inplay_clf_score = np.inf   # validation log-loss (lower is better)
-best_inplay_reg_score = np.inf   # validation MAE (lower is better)
+best_inplay_clf_score = np.inf   # validation log-loss
+best_inplay_reg_score = np.inf   # validation MAE
 
 for name, (model, param_grid) in clf_models.items():
     print(f"Training {name} (in-play classification)...")
@@ -418,7 +390,7 @@ for name, (model, param_grid) in clf_models.items():
         gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
         gs.fit(X_snap_train, y_snap_train_cls)
         best_model = gs.best_estimator_
-        val_score = -gs.best_score_   # because scoring is neg_log_loss
+        val_score = -gs.best_score_ 
     else:
         pipe = create_clf_pipeline(model, use_pf_smote=True, scaler=True)
         param_grid_adj = {}
@@ -490,8 +462,6 @@ print(df_cls_results)
 print("Regression results:")
 print(df_reg_results)
 
-# PART 6 Done (all models trained and evaluated)
-
 # ======================================================================
 # PART 7: IN-PLAY EVALUATION (USING THE BEST MODELS)
 # ======================================================================
@@ -525,9 +495,9 @@ def eval_per_minute_reg(model, X, y, times):
 # ----------------------------------------------------------------------
 # 7a. Per-phase metrics for the best in-play models
 # ----------------------------------------------------------------------
-# Use the best models stored during loops (or fallback to retrained XGBoost)
+# Use the best models stored during loops
 if best_inplay_clf is None:
-    # Fallback: retrain a simple XGBoost (should not happen)
+    # Fallback: retrain a simple XGBoost
     best_inplay_clf = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
     best_inplay_clf.fit(X_snap_train, y_snap_train_cls)
 if best_inplay_reg is None:
@@ -663,8 +633,6 @@ plot_reliability_diagram(y_pre_test_cls, pre_probs,
 print("Part 7 done: per-phase evaluation, frozen baseline comparison, and reliability diagrams saved.")
 
 # -------------------- 8. Compute Cost & Kernel Scaling Analysis --------------------
-# We'll measure wall-clock time and peak memory for each model on the full training set.
-# We'll also demonstrate O(n^2) scaling of kernel methods by training on increasing subsets.
 
 def measure_training(model, X, y):
     """Fit model and return time and memory."""
@@ -676,8 +644,6 @@ def measure_training(model, X, y):
     mem_after = process.memory_info().rss / 1024**2
     return end-start, mem_after - mem_before
 
-# We'll measure for a few models on pre-match training set.
-# We'll also do kernel scaling by varying dataset size.
 subsample_sizes = [100, 500, 1000, 2000, 5000]
 kernel_times = []
 for n in subsample_sizes:
@@ -722,11 +688,7 @@ plt.legend()
 plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling_comparison.png'))
 plt.close()
 
-# PART 8 Done (compute & scaling)
-
 # -------------------- 9. SHAP Analysis (Preliminary) --------------------
-# We'll use a pre‑match classification model for SHAP (18 features).
-# Retrain a simple XGBoost on pre‑match data (no tuning, just for demonstration).
 shap_model = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
 shap_model.fit(X_pre_train, y_pre_train_cls)
 
@@ -754,7 +716,6 @@ plt.savefig(os.path.join(FIGURES_DIR, 'shap_waterfall.png'))
 plt.close()
 
 print("SHAP preliminary analysis complete. Plots saved.")
-# PART 9 Done
 
 # ----- Worst prediction alanysis -----
 def worst_predictions_analysis(model, X, y_true, feature_names, model_name, task, top_k=10):
@@ -904,7 +865,7 @@ print(df_resample[['resampler', 'log_loss', 'rps', 'accuracy', 'ece']])
 df_resample.to_csv('resampling_comparison.csv', index=False)
 
 # ======================================================================
-# SHAP TIMELINE FOR A SINGLE MATCH (Corrected)
+# SHAP TIMELINE FOR A SINGLE MATCH
 # ======================================================================
 
 def shap_timeline_for_match(match_id, clf_model, reg_model, test_snap_full, y_cls, y_reg, feature_names, fig_dir):
@@ -1046,7 +1007,7 @@ import joblib
 joblib.dump(best_inplay_clf, 'best_inplay_clf.pkl')
 joblib.dump(best_inplay_reg, 'best_inplay_reg.pkl')
 
-# Save feature names and other metadata (for app to use)
+# Save feature names and other metadata (for app.py and app_2.py to use)
 metadata = {
     'pre_feat_cols': pre_feat_cols,
     'snap_feat_cols': snap_feat_cols,
@@ -1055,7 +1016,6 @@ metadata = {
     'y_snap_test_cls': y_snap_test_cls,
     'y_snap_test_reg': y_snap_test_reg,
 }
-# We can't save large DataFrames in a pickle easily, so we save them as CSV
 test_snap.to_csv('test_snapshots_for_app.csv', index=False)
 test_pre.to_csv('test_prematch_for_app.csv', index=False)
 # Save y arrays as numpy

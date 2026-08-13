@@ -28,8 +28,7 @@ test_pre = pd.read_csv('test_prematch_for_app.csv')
 y_snap_test_cls = np.load('y_snap_test_cls.npy')
 y_snap_test_reg = np.load('y_snap_test_reg.npy')
 
-# Load feature names (you can also save them in a pickle)
-# For simplicity, we define them here (they should match main)
+# Load feature names
 snap_feat_cols = [c for c in test_snap.columns if c not in 
                   ['match_id', 'snapshot_time', 'final_goal_diff', 'final_result']]
 pre_feat_cols = [c for c in test_pre.columns if c not in 

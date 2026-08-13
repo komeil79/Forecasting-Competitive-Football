@@ -99,7 +99,7 @@ df_out['prob_A'] = probs[:, 2]
 df_out['expected_margin'] = margins
 df_out['pred_class'] = pred_classes
 
-# Store top SHAP features and values as JSON strings (lists)
+# Store top SHAP features and values
 df_out['top_shap_features'] = [list(x) for x in top_shap_features]
 df_out['top_shap_values'] = [list(x) for x in top_shap_values]
 

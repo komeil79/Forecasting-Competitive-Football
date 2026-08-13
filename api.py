@@ -22,7 +22,7 @@ if not os.path.exists(PRECOMPUTED_PATH):
 
 df = pd.read_parquet(PRECOMPUTED_PATH)
 
-# Build a lookup dictionary with pure Python types
+# Build a lookup dictionary
 lookup = {}
 for idx, row in df.iterrows():
     key = (row['match_id'], row['snapshot_time'])
@@ -34,8 +34,8 @@ for idx, row in df.iterrows():
         "prob_A": float(row['prob_A']),
         "expected_margin": float(row['expected_margin']),
         "predicted_class": int(row['pred_class']),
-        "top_shap_features": list(row['top_shap_features']),           # ensure list
-        "top_shap_values": [float(v) for v in row['top_shap_values']]  # ensure list of floats
+        "top_shap_features": list(row['top_shap_features']),
+        "top_shap_values": [float(v) for v in row['top_shap_values']]
     }
     lookup[key] = record
 

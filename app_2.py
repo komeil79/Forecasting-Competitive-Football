@@ -1,11 +1,10 @@
 """
-app.py (Final)
+app_2.py
 --------------
-Beautiful live in‑play dashboard with:
-- Team names instead of match IDs
-- Latency measurement (<200ms)
-- Styled metrics & SHAP plots
-- Replay mode with real‑time updates
+Live in-play dashboard with:
+- Latency measurement
+- Metrics & SHAP plots
+- Replay mode with real-time updates
 """
 
 import streamlit as st
@@ -23,7 +22,7 @@ TEST_PRE = "test_prematch_for_app.csv"
 
 # -------------------- PAGE SETUP --------------------
 st.set_page_config(
-    page_title="Live In‑Play Prediction",
+    page_title="Live In-Play Prediction",
     page_icon="⚽",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -96,7 +95,6 @@ def load_data():
 
 df_snap, df_pre = load_data()
 
-# Build match mapping: match_id -> "Home vs Away"
 match_map = {}
 for _, row in df_pre.iterrows():
     mid = row['match_id']
@@ -113,7 +111,7 @@ st.sidebar.title("⚙️ Controls")
 st.sidebar.info("Select a match and replay live.")
 
 # -------------------- MAIN UI --------------------
-st.title("⚽ Live In‑Play Prediction & SHAP Explanation")
+st.title("⚽ Live In-Play Prediction & SHAP Explanation")
 
 # Match selection using team names
 selected_match_name = st.selectbox("Select a match", list(match_options.keys()))
@@ -168,7 +166,7 @@ if st.button("▶️ Replay Match"):
         progress_bar.progress(progress)
         status_text.text(f"Minute {t}")
 
-        # Update metrics – replace entire container
+        # Update metrics
         with metrics_placeholder.container():
             cols = st.columns(4)
             # Home score
@@ -221,7 +219,7 @@ if st.button("▶️ Replay Match"):
             </div>
             """, unsafe_allow_html=True)
 
-        # SHAP bar plot – replace placeholder
+        # SHAP bar plot
         shap_placeholder.empty()
         fig, ax = plt.subplots(figsize=(8, 4))
         features = data['top_shap_features']
