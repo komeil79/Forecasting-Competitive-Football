@@ -147,14 +147,15 @@ pip install -r requirements.txt
 ## Project Structure
 
 ```text
-├── final_data_prep_complete.py      # Data ingestion and feature engineering
+├── final_data_prep_complete.py       # Data ingestion and feature engineering
 ├── main.py                           # Main training and evaluation script
 ├── PF_SMOTE.py                       # Implementation of Paper P1
 ├── IFX_model.py                      # Implementation of Paper P2
 ├── odds_integration.py               # Downloads odds and computes market baseline
-├── precompute_predictions.py         # Precomputes predictions for bonus API
-├── api.py                            # FastAPI service (bonus)
-├── app_2.py                          # Streamlit dashboard (bonus)
+├── precompute_predictions.py         # Precomputes predictions for API
+├── api.py                            # FastAPI service
+├── app.py                            # Old streamlit dashboard
+├── app_2.py                          # New streamlit dashboard
 ├── processed_data/                   # Generated datasets (Parquet & CSV)
 ├── figures/                          # All output plots and figures
 ├── requirements.txt
