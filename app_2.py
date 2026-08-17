@@ -28,7 +28,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# -------------------- CUSTOM CSS (Colorful & Modern) --------------------
+# -------------------- CUSTOM CSS --------------------
 st.markdown("""
 <style>
     /* Background */

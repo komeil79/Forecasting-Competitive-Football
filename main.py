@@ -65,6 +65,7 @@ from IFX_model import IFX_XGBoost
 
 # -------------------- 1. Load Data --------------------
 DATA_DIR = "processed_data"  # adjust path if needed
+OUTPUT_DIR = "out"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIGURES_DIR = os.path.join(BASE_DIR, 'Forecasting-Competitive-Football\\figures')
 
@@ -862,7 +863,7 @@ for name, resampler in resamplers.items():
 df_resample = pd.DataFrame(resample_results)
 print("Resampling comparison results:")
 print(df_resample[['resampler', 'log_loss', 'rps', 'accuracy', 'ece']])
-df_resample.to_csv('resampling_comparison.csv', index=False)
+df_resample.to_csv(os.path.join(OUTPUT_DIR, 'resampling_comparison.csv'), index=False)
 
 # ======================================================================
 # SHAP TIMELINE FOR A SINGLE MATCH
@@ -1004,8 +1005,8 @@ shap_timeline_for_match(example_match_id,
 import joblib
 
 # Save the best in-play models
-joblib.dump(best_inplay_clf, 'best_inplay_clf.pkl')
-joblib.dump(best_inplay_reg, 'best_inplay_reg.pkl')
+joblib.dump(best_inplay_clf, os.path.join(OUTPUT_DIR, 'best_inplay_clf.pkl'))
+joblib.dump(best_inplay_reg, os.path.join(OUTPUT_DIR, 'best_inplay_reg.pkl'))
 
 # Save feature names and other metadata (for app.py and app_2.py to use)
 metadata = {
@@ -1016,10 +1017,10 @@ metadata = {
     'y_snap_test_cls': y_snap_test_cls,
     'y_snap_test_reg': y_snap_test_reg,
 }
-test_snap.to_csv('test_snapshots_for_app.csv', index=False)
-test_pre.to_csv('test_prematch_for_app.csv', index=False)
+test_snap.to_csv(os.path.join(OUTPUT_DIR, 'test_snapshots_for_app.csv'), index=False)
+test_pre.to_csv(os.path.join(OUTPUT_DIR, 'test_prematch_for_app.csv'), index=False)
 # Save y arrays as numpy
-np.save('y_snap_test_cls.npy', y_snap_test_cls)
-np.save('y_snap_test_reg.npy', y_snap_test_reg)
+np.save(os.path.join(OUTPUT_DIR, 'y_snap_test_cls.npy'), y_snap_test_cls)
+np.save(os.path.join(OUTPUT_DIR, 'y_snap_test_reg.npy'), y_snap_test_reg)
 
-print("Models and data saved for final defence.")
+print("Models and data saved.")

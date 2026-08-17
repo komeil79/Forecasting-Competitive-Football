@@ -19,10 +19,11 @@ from imblearn.pipeline import Pipeline as ImbPipeline
 import os
 
 # -------------------- CONFIG --------------------
-MODEL_CLF_PATH = 'best_inplay_clf.pkl'
-MODEL_REG_PATH = 'best_inplay_reg.pkl'
-SNAPSHOT_TEST_PATH = 'test_snapshots_for_app.csv'
-OUTPUT_PATH = 'precomputed_predictions.parquet'
+OUTPUT_DIR = "out"
+MODEL_CLF_PATH = os.path.join(OUTPUT_DIR, 'best_inplay_clf.pkl')
+MODEL_REG_PATH = os.path.join(OUTPUT_DIR, 'best_inplay_reg.pkl')
+SNAPSHOT_TEST_PATH = os.path.join(OUTPUT_DIR, 'test_snapshots_for_app.csv')
+OUTPUT_PATH = os.path.join(OUTPUT_DIR, 'precomputed_predictions.parquet')
 FEATURE_COLS = [c for c in pd.read_csv(SNAPSHOT_TEST_PATH).columns 
                 if c not in ['match_id', 'snapshot_time', 'final_goal_diff', 'final_result']]
 
