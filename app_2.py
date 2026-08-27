@@ -17,8 +17,8 @@ import seaborn as sns
 
 # -------------------- CONFIG --------------------
 API_URL = "http://localhost:8000"  # FastAPI endpoint
-TEST_SNAPSHOTS = "test_snapshots_for_app.csv"
-TEST_PRE = "test_prematch_for_app.csv"
+TEST_SNAPSHOTS = "out/test_snapshots_for_app.csv"
+TEST_PRE = "out/test_prematch_for_app.csv"
 
 # -------------------- PAGE SETUP --------------------
 st.set_page_config(
@@ -137,17 +137,14 @@ if st.button("▶️ Replay Match"):
     status_text = st.empty()
     latency_text = st.empty()
     
-    # Placeholders for dynamic content
     metrics_placeholder = st.empty()
     shap_placeholder = st.empty()
 
+    preloaded_data = []
     for i, t in enumerate(times):
-        # Start timer
         start_time = time.perf_counter()
-
-        # Call API
         try:
-            resp = requests.get(f"{API_URL}/predict/{selected_match}/{t}")
+            resp = requests.get(f"{API_URL}/predict/{selected_match}/{t}", timeout=1.0)
             if resp.status_code == 200:
                 data = resp.json()
             else:
@@ -156,10 +153,14 @@ if st.button("▶️ Replay Match"):
         except Exception as e:
             st.error(f"Connection error: {e}")
             break
-
-        # Calculate latency
         latency_ms = (time.perf_counter() - start_time) * 1000
-        latency_text.markdown(f"🟢 **Response time:** `{latency_ms:.2f} ms` (under 200 ms ✅)")
+        preloaded_data.append((data, latency_ms))
+
+    for i, (data, latency_ms) in enumerate(preloaded_data):
+        t = times[i]
+        progress_bar.progress((i+1) / len(times))
+        status_text.text(f"Minute {t}")
+        latency_text.markdown(f"🟢 **Response time:** `{latency_ms:.2f} ms`")
 
         # Update progress
         progress = (i+1) / len(times)
