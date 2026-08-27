@@ -386,7 +386,7 @@ def plot_rolling_multi_step(rolling_df):
     if rolling_df.empty:
         return
     plt.figure(figsize=(12, 6))
-    for h in [1,2,3]:
+    for h in [1, 2, 3]:
         data = rolling_df[rolling_df['horizon'] == h]
         plt.plot(data['test_season'], data['log_loss'], marker='o', label=f'Horizon {h}')
     plt.xlabel('Test Season')
@@ -394,6 +394,7 @@ def plot_rolling_multi_step(rolling_df):
     plt.title('Rolling Multi-Step Evaluation (log-loss)')
     plt.legend()
     plt.grid(True)
+    plt.ylim(0, 2)
     plt.tight_layout()
     plt.savefig(os.path.join(FIGURES_DIR, 'rolling_multi_step_logloss.png'))
     plt.close()
@@ -439,6 +440,7 @@ def plot_ensemble_seasonal(ensemble_df, all_df, window_df):
     plt.title('Seasonal Metrics: All vs Window vs Ensemble')
     plt.legend()
     plt.grid(True)
+    plt.ylim(0, 2)
     plt.tight_layout()
     plt.savefig(os.path.join(FIGURES_DIR, 'seasonal_comparison_logloss.png'))
     plt.close()
@@ -464,6 +466,7 @@ def plot_high_risk_brier(hr_df):
     plt.ylabel('Brier (High-risk)')
     plt.title('High-Risk Brier over Seasons')
     plt.grid(True)
+    plt.ylim(0, 1)
     plt.tight_layout()
     plt.savefig(os.path.join(FIGURES_DIR, 'high_risk_brier.png'))
     plt.close()
