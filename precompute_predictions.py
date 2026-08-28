@@ -14,8 +14,6 @@ import numpy as np
 import joblib
 import shap
 import xgboost as xgb
-from sklearn.pipeline import Pipeline
-from imblearn.pipeline import Pipeline as ImbPipeline
 import os
 
 # -------------------- CONFIG --------------------
@@ -24,12 +22,37 @@ MODEL_CLF_PATH = os.path.join(OUTPUT_DIR, 'best_inplay_clf.pkl')
 MODEL_REG_PATH = os.path.join(OUTPUT_DIR, 'best_inplay_reg.pkl')
 SNAPSHOT_TEST_PATH = os.path.join(OUTPUT_DIR, 'test_snapshots_for_app.csv')
 OUTPUT_PATH = os.path.join(OUTPUT_DIR, 'precomputed_predictions.parquet')
-FEATURE_COLS = [c for c in pd.read_csv(SNAPSHOT_TEST_PATH).columns 
-                if c not in ['match_id', 'snapshot_time', 'final_goal_diff', 'final_result']]
 
-# -------------------- HELPER --------------------
+# -------------------- LOAD SNAPSHOTS --------------------
+df_snap = pd.read_csv(SNAPSHOT_TEST_PATH)
+
+# -------------------- FEATURE SELECTION (exact 8 in-play features) --------------------
+# These are the only features the in-play model expects.
+FEATURE_COLS = [
+    'time_norm',
+    'current_home_score',
+    'current_away_score',
+    'red_card_diff',
+    'shots_recent_5min',
+    'passes_recent_5min',
+    'pressures_recent_5min',
+    'momentum'
+]
+
+# Ensure all columns exist; otherwise raise a clear error
+missing = [col for col in FEATURE_COLS if col not in df_snap.columns]
+if missing:
+    raise ValueError(f"Missing required columns in test_snapshots_for_app.csv: {missing}")
+
+X = df_snap[FEATURE_COLS].values
+
+# -------------------- LOAD MODELS --------------------
+print("Loading models...")
+clf_model = joblib.load(MODEL_CLF_PATH)
+reg_model = joblib.load(MODEL_REG_PATH)
+
+# Extract tree models for SHAP
 def extract_tree_model(model):
-    """Extract the underlying XGBoost booster from pipelines or IFX wrapper."""
     if hasattr(model, 'model') and isinstance(model.model, xgb.Booster):
         return model.model
     if hasattr(model, 'steps'):
@@ -44,21 +67,8 @@ def extract_tree_model(model):
         return last_est
     return model
 
-# -------------------- LOAD MODELS --------------------
-print("Loading models...")
-clf_model = joblib.load(MODEL_CLF_PATH)
-reg_model = joblib.load(MODEL_REG_PATH)
-
-# Extract tree models for SHAP
 shap_clf = extract_tree_model(clf_model)
-shap_reg = extract_tree_model(reg_model)
 explainer_clf = shap.TreeExplainer(shap_clf)
-
-# -------------------- LOAD TEST SNAPSHOTS --------------------
-print("Loading test snapshots...")
-df_snap = pd.read_csv(SNAPSHOT_TEST_PATH)
-df_snap = df_snap.sort_values(['match_id', 'snapshot_time'])
-X = df_snap[FEATURE_COLS].values
 
 # -------------------- PREDICT --------------------
 print("Computing predictions...")
@@ -67,10 +77,9 @@ margins = reg_model.predict(X)
 pred_classes = np.argmax(probs, axis=1)
 
 # -------------------- SHAP VALUES --------------------
-print("Computing SHAP values for predicted class (this may take a few minutes)...")
+print("Computing SHAP values (this may take a few minutes)...")
 shap_values = explainer_clf.shap_values(X)
 
-# For each sample, extract SHAP for the predicted class
 shap_class_vals = []
 for i, cls in enumerate(pred_classes):
     if isinstance(shap_values, list):
@@ -79,9 +88,9 @@ for i, cls in enumerate(pred_classes):
         shap_class_vals.append(shap_values[i, :, cls])
     else:
         shap_class_vals.append(shap_values[i])
-shap_class_vals = np.array(shap_class_vals)  # (n_samples, n_features)
+shap_class_vals = np.array(shap_class_vals)
 
-# Get top 5 features by absolute SHAP value for each sample
+# Top 5 features
 top_k = 5
 top_shap_features = []
 top_shap_values = []
@@ -92,15 +101,12 @@ for i in range(len(shap_class_vals)):
     top_shap_values.append([shap_class_vals[i, idx] for idx in top_idx])
 
 # -------------------- SAVE --------------------
-print("Saving precomputed data...")
 df_out = df_snap[['match_id', 'snapshot_time']].copy()
 df_out['prob_H'] = probs[:, 0]
 df_out['prob_D'] = probs[:, 1]
 df_out['prob_A'] = probs[:, 2]
 df_out['expected_margin'] = margins
 df_out['pred_class'] = pred_classes
-
-# Store top SHAP features and values
 df_out['top_shap_features'] = [list(x) for x in top_shap_features]
 df_out['top_shap_values'] = [list(x) for x in top_shap_values]
 

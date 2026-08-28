@@ -14,9 +14,11 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # -------------------- CONFIG --------------------
-API_URL = "http://localhost:8000"  # FastAPI endpoint
+API_URL = "http://127.0.0.1:8000"  # use 127.0.0.1 to avoid IPv6 issues
 TEST_SNAPSHOTS = "out/test_snapshots_for_app.csv"
 TEST_PRE = "out/test_prematch_for_app.csv"
 
@@ -27,6 +29,22 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# -------------------- PERSISTENT SESSION --------------------
+@st.cache_resource
+def get_session():
+    session = requests.Session()
+    adapter = HTTPAdapter(pool_connections=10, pool_maxsize=10)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    session.headers.update({"Connection": "keep-alive"})
+    return session
+
+try:
+    session = get_session()
+except Exception as e:
+    st.error(f"Failed to create session: {e}")
+    st.stop()
 
 # -------------------- CUSTOM CSS --------------------
 st.markdown("""
@@ -93,20 +111,21 @@ def load_data():
     df_pre = pd.read_csv(TEST_PRE)
     return df_snap, df_pre
 
-df_snap, df_pre = load_data()
+try:
+    df_snap, df_pre = load_data()
+except Exception as e:
+    st.error(f"Failed to load data: {e}")
+    st.stop()
 
-match_map = {}
+# -------------------- MATCH OPTIONS --------------------
+match_options = {}
 for _, row in df_pre.iterrows():
     mid = row['match_id']
     home = row['home_team']
     away = row['away_team']
-    match_map[mid] = f"{home}  VS  {away}"
+    match_options[f"{home}  VS  {away}"] = mid
 
-# Reverse map for selectbox
-match_options = {f"{home}  VS  {away}": mid for mid, home, away in 
-                 zip(df_pre['match_id'], df_pre['home_team'], df_pre['away_team'])}
-
-# -------------------- SIDEBAR (optional) --------------------
+# -------------------- SIDEBAR --------------------
 st.sidebar.title("⚙️ Controls")
 st.sidebar.info("Select a match and replay live.")
 
@@ -114,11 +133,15 @@ st.sidebar.info("Select a match and replay live.")
 st.title("⚽ Live In-Play Prediction & SHAP Explanation")
 
 # Match selection using team names
-selected_match_name = st.selectbox("Select a match", list(match_options.keys()))
-selected_match = match_options[selected_match_name]
+try:
+    selected_match_name = st.selectbox("Select a match", list(match_options.keys()))
+    selected_match = match_options[selected_match_name]
+except Exception as e:
+    st.error(f"Error in match selection: {e}")
+    st.stop()
 
 # Filter snapshots for this match
-match_data = df_snap[df_snap['match_id'] == selected_match].sort_values('snapshot_time')
+match_data = df_snap[df_snap['match_id'] == selected_match].sort_values('snapshot_time').reset_index(drop=True)
 if match_data.empty:
     st.error("No snapshots found for this match.")
     st.stop()
@@ -126,134 +149,136 @@ if match_data.empty:
 times = match_data['snapshot_time'].values
 
 # Slider
-snapshot_time = st.slider("⏱️ Snapshot time (minute)", 
-                          min_value=int(times[0]), 
-                          max_value=int(times[-1]), 
-                          step=5)
+try:
+    snapshot_time = st.slider("⏱️ Snapshot time (minute)", 
+                              min_value=int(times[0]), 
+                              max_value=int(times[-1]), 
+                              step=5)
+except Exception as e:
+    st.error(f"Error in slider: {e}")
+    st.stop()
+
+# -------------------- API CALLS --------------------
+def get_prediction(match_id, snapshot_time):
+    url = f"{API_URL}/predict/{match_id}/{snapshot_time}"
+    start = time.perf_counter()
+    try:
+        resp = session.get(url, timeout=(0.5, 5.0))
+    except Exception as e:
+        raise RuntimeError(f"Connection error: {e}")
+    latency_ms = (time.perf_counter() - start) * 1000
+    if resp.status_code != 200:
+        raise RuntimeError(f"API error: {resp.status_code} - {resp.text}")
+    return resp.json(), latency_ms
 
 # -------------------- REPLAY MODE --------------------
 if st.button("▶️ Replay Match"):
     progress_bar = st.progress(0)
     status_text = st.empty()
     latency_text = st.empty()
-    
     metrics_placeholder = st.empty()
     shap_placeholder = st.empty()
 
-    preloaded_data = []
-    for i, t in enumerate(times):
-        start_time = time.perf_counter()
-        try:
-            resp = requests.get(f"{API_URL}/predict/{selected_match}/{t}", timeout=1.0)
-            if resp.status_code == 200:
-                data = resp.json()
-            else:
-                st.error(f"API error: {resp.status_code}")
-                break
-        except Exception as e:
-            st.error(f"Connection error: {e}")
-            break
-        latency_ms = (time.perf_counter() - start_time) * 1000
-        preloaded_data.append((data, latency_ms))
+    try:
+        # Preload all predictions (individual GETs)
+        preloaded_data = []
+        for i, t in enumerate(times):
+            data, latency_ms = get_prediction(selected_match, int(t))
+            preloaded_data.append((data, latency_ms))
 
-    for i, (data, latency_ms) in enumerate(preloaded_data):
-        t = times[i]
-        progress_bar.progress((i+1) / len(times))
-        status_text.text(f"Minute {t}")
-        latency_text.markdown(f"🟢 **Response time:** `{latency_ms:.2f} ms`")
+        for i, (data, latency_ms) in enumerate(preloaded_data):
+            t = int(times[i])
+            progress_bar.progress((i+1) / len(times))
+            status_text.text(f"Minute {t}")
+            latency_text.markdown(f"🟢 **Response time:** `{latency_ms:.2f} ms`")
 
-        # Update progress
-        progress = (i+1) / len(times)
-        progress_bar.progress(progress)
-        status_text.text(f"Minute {t}")
+            # Update metrics
+            with metrics_placeholder.container():
+                cols = st.columns(4)
+                cols[0].markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">🏠 Home Score</div>
+                    <div class="metric-value">{match_data.iloc[i]['current_home_score']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                cols[1].markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">✈️ Away Score</div>
+                    <div class="metric-value">{match_data.iloc[i]['current_away_score']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                cols[2].markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">🟥 Red Card Diff</div>
+                    <div class="metric-value">{match_data.iloc[i]['red_card_diff']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                cols[3].markdown(f"""
+                <div class="metric-card">
+                    <div class="metric-label">📊 Expected Margin</div>
+                    <div class="metric-value">{data['expected_margin']:.2f}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-        # Update metrics
-        with metrics_placeholder.container():
-            cols = st.columns(4)
-            # Home score
-            cols[0].markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">🏠 Home Score</div>
-                <div class="metric-value">{match_data.iloc[i]['current_home_score']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            # Away score
-            cols[1].markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">✈️ Away Score</div>
-                <div class="metric-value">{match_data.iloc[i]['current_away_score']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            # Red card diff
-            cols[2].markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">🟥 Red Card Diff</div>
-                <div class="metric-value">{match_data.iloc[i]['red_card_diff']}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            # Expected margin
-            cols[3].markdown(f"""
-            <div class="metric-card">
-                <div class="metric-label">📊 Expected Margin</div>
-                <div class="metric-value">{data['expected_margin']:.2f}</div>
-            </div>
-            """, unsafe_allow_html=True)
+                # Probabilities
+                prob_cols = st.columns(3)
+                prob_cols[0].markdown(f"""
+                <div class="metric-card" style="border-left-color: #28a745;">
+                    <div class="metric-label">🏆 Home Win</div>
+                    <div class="metric-value" style="color:#28a745;">{data['prob_H']:.2%}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                prob_cols[1].markdown(f"""
+                <div class="metric-card" style="border-left-color: #ffc107;">
+                    <div class="metric-label">🤝 Draw</div>
+                    <div class="metric-value" style="color:#ffc107;">{data['prob_D']:.2%}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                prob_cols[2].markdown(f"""
+                <div class="metric-card" style="border-left-color: #dc3545;">
+                    <div class="metric-label">✈️ Away Win</div>
+                    <div class="metric-value" style="color:#dc3545;">{data['prob_A']:.2%}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-            # Probabilities (three columns)
-            prob_cols = st.columns(3)
-            prob_cols[0].markdown(f"""
-            <div class="metric-card" style="border-left-color: #28a745;">
-                <div class="metric-label">🏆 Home Win</div>
-                <div class="metric-value" style="color:#28a745;">{data['prob_H']:.2%}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            prob_cols[1].markdown(f"""
-            <div class="metric-card" style="border-left-color: #ffc107;">
-                <div class="metric-label">🤝 Draw</div>
-                <div class="metric-value" style="color:#ffc107;">{data['prob_D']:.2%}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            prob_cols[2].markdown(f"""
-            <div class="metric-card" style="border-left-color: #dc3545;">
-                <div class="metric-label">✈️ Away Win</div>
-                <div class="metric-value" style="color:#dc3545;">{data['prob_A']:.2%}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            # SHAP bar plot
+            shap_placeholder.empty()
+            fig, ax = plt.subplots(figsize=(8, 4))
+            features = data['top_shap_features']
+            values = data['top_shap_values']
+            colors = sns.color_palette("coolwarm", len(values))
+            ax.barh(features, values, color=colors, edgecolor='black', linewidth=0.5)
+            ax.axvline(0, color='black', linestyle='--', linewidth=0.8)
+            ax.set_xlabel('SHAP value', fontsize=12)
+            ax.set_title(f'Top SHAP contributions at minute {t}', fontsize=14, fontweight='bold')
+            ax.grid(axis='x', linestyle='--', alpha=0.6)
+            shap_placeholder.pyplot(fig)
+            plt.close(fig)
 
-        # SHAP bar plot
-        shap_placeholder.empty()
-        fig, ax = plt.subplots(figsize=(8, 4))
-        features = data['top_shap_features']
-        values = data['top_shap_values']
-        # Use a colormap
-        colors = sns.color_palette("coolwarm", len(values))
-        ax.barh(features, values, color=colors, edgecolor='black', linewidth=0.5)
-        ax.axvline(0, color='black', linestyle='--', linewidth=0.8)
-        ax.set_xlabel('SHAP value', fontsize=12)
-        ax.set_title(f'Top SHAP contributions at minute {t}', fontsize=14, fontweight='bold')
-        ax.grid(axis='x', linestyle='--', alpha=0.6)
-        shap_placeholder.pyplot(fig)
-        plt.close(fig)
+            time.sleep(0.5)
 
-        time.sleep(0.5)  # simulate real-time
+        progress_bar.progress(1.0)
+        status_text.text("✅ Replay finished.")
+        latency_text.empty()
 
-    progress_bar.progress(1.0)
-    status_text.text("✅ Replay finished.")
-    latency_text.empty()  # remove latency after replay
+    except Exception as e:
+        st.error(f"Replay error: {e}")
 
 else:
     # Single snapshot view
-    closest_idx = np.argmin(np.abs(times - snapshot_time))
-    t = times[closest_idx]
+    try:
+        closest_idx = np.argmin(np.abs(times - snapshot_time))
+        t = int(times[closest_idx])
+        data, latency_ms = get_prediction(selected_match, t)
 
-    # Timer for latency
-    start_time = time.perf_counter()
-    resp = requests.get(f"{API_URL}/predict/{selected_match}/{t}")
-    latency_ms = (time.perf_counter() - start_time) * 1000
+        if latency_ms < 200:
+            latency_icon = "🟢"
+            latency_status = "under 200 ms ✅"
+        else:
+            latency_icon = "🔴"
+            latency_status = "over 200 ms ❌"
 
-    if resp.status_code == 200:
-        data = resp.json()
-        st.markdown(f"🟢 **Response time:** `{latency_ms:.2f} ms` (under 200 ms ✅)")
+        st.markdown(f"{latency_icon} **Response time:** `{latency_ms:.2f} ms` (under 200 ms ✅)")
 
         # Metrics
         cols = st.columns(4)
@@ -313,5 +338,6 @@ else:
         ax.set_title(f'Top SHAP contributions at minute {t}', fontsize=14, fontweight='bold')
         ax.grid(axis='x', linestyle='--', alpha=0.6)
         st.pyplot(fig)
-    else:
-        st.error("API error")
+
+    except Exception as e:
+        st.error(f"API error: {e}")

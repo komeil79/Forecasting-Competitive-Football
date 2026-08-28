@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import xgboost as xgb
 
-from sklearn.kernel_approximation import RBFSampler, Nystroem
+from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import Ridge, SGDClassifier, SGDRegressor
-from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import ADASYN, SMOTE, BorderlineSMOTE
 from sklearn.isotonic import IsotonicRegression
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.svm import SVC, SVR
@@ -20,195 +20,180 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
 from xgboost import XGBClassifier, XGBRegressor
 from lightgbm import LGBMClassifier, LGBMRegressor
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import (accuracy_score, log_loss, brier_score_loss,
-                             mean_absolute_error, mean_squared_error, confusion_matrix,
-                             classification_report, roc_auc_score)
-from sklearn.model_selection import GridSearchCV, ParameterGrid
+                             mean_absolute_error, mean_squared_error)
 from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator, TransformerMixin
 
-
-# Imbalanced-learn
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline as ImbPipeline
 
-# SHAP
 import shap
-
-# For memory measurement
 import psutil
 
-
-# Helper function for approximating kernel models
-def make_approx_kernel_pipeline(task_type='classification'):
-    """Return a pipeline with Nystroem approximation + linear model."""
-    if task_type == 'classification':
-        return Pipeline([
-            ('scaler', StandardScaler()),
-            ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=42)),
-            ('clf', SGDClassifier(loss='log_loss', random_state=42, max_iter=1000, tol=1e-3))
-        ])
-    else:  # regression
-        return Pipeline([
-            ('scaler', StandardScaler()),
-            ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=42)),
-            ('reg', SGDRegressor(random_state=42, max_iter=1000, tol=1e-3))
-        ])
-    
-# ================ PHASE 1 IMPORTS (PF-SMOTE and IFX) ================
 from PF_SMOTE import PF_SMOTE
 from IFX_model import IFX_XGBoost
 
-# ================ PHASE 2 MAIN WORKFLOW ================
-
-# -------------------- 1. Load Data --------------------
-DATA_DIR = "processed_data"  # adjust path if needed
+# ===================== CONFIGURATION =====================
+DATA_DIR = "processed_data"
 OUTPUT_DIR = "out"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIGURES_DIR = os.path.join(BASE_DIR, 'Forecasting-Competitive-Football\\figures')
+SEED = 42
+MIN_TRAIN_MATCHES = 50
+MIN_TEST_MATCHES = 5
+WINDOW_SIZE = None          # None = all previous seasons; set to 5 for last 5
+CALIBRATE = True
+USE_PF_SMOTE = True
+HIGH_RISK_THRESHOLD = 0.3
+ENSEMBLE_WINDOWS = [None, 5, 3]
+# =========================================================
 
-def load_data():
-    """Load pre-match and snapshot datasets, and match info."""
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(FIGURES_DIR, exist_ok=True)
+
+# ===================== DATA LOADING =====================
+def load_original_data():
+    """Load original pre-match and snapshot datasets (train/val/test) – kept for reference."""
     train_pre = pd.read_parquet(os.path.join(DATA_DIR, 'train_prematch.parquet'))
     val_pre = pd.read_parquet(os.path.join(DATA_DIR, 'val_prematch.parquet'))
     test_pre = pd.read_parquet(os.path.join(DATA_DIR, 'test_prematch.parquet'))
     train_snap = pd.read_parquet(os.path.join(DATA_DIR, 'train_snapshots.parquet'))
     val_snap = pd.read_parquet(os.path.join(DATA_DIR, 'val_snapshots.parquet'))
     test_snap = pd.read_parquet(os.path.join(DATA_DIR, 'test_snapshots.parquet'))
-    # matches_full for potential extra info (not needed for features)
     return (train_pre, val_pre, test_pre), (train_snap, val_snap, test_snap)
 
-(train_pre, val_pre, test_pre), (train_snap, val_snap, test_snap) = load_data()
-print("Data loaded. Pre-match train shape:", train_pre.shape)
-print("Snapshots train shape:", train_snap.shape)
+def load_full_data():
+    """Load full pre-match data with season info (for temporal folds)."""
+    prematch = pd.read_csv(os.path.join(DATA_DIR, 'full_prematch.csv'))
+    matches = pd.read_csv(os.path.join(DATA_DIR, 'matches_full.csv'))
+    matches = matches[['match_id', 'competition_id', 'result']]
+    df = prematch.merge(matches, on='match_id', how='left')
+    df['match_date'] = pd.to_datetime(df['match_date'])
+    df['season'] = df['match_date'].dt.year
+    df.loc[df['match_date'].dt.month < 8, 'season'] = df['season'] - 1
+    df['label'] = df['result'].map({'H':0, 'D':1, 'A':2})
+    return df
 
-# -------------------- 2. Define Features & Targets --------------------
-# Pre-match classification features
-pre_feat_cols = [c for c in train_pre.columns if c not in 
-                 ['match_id', 'match_date', 'home_team', 'away_team', 
-                  'label_goal_diff', 'label_result']]
-X_pre_train = train_pre[pre_feat_cols].values
-y_pre_train_cls = train_pre['label_result'].map({'H':0, 'D':1, 'A':2}).values
-y_pre_train_reg = train_pre['label_goal_diff'].values
+def load_full_snapshots():
+    """Load full snapshot data (for in-play temporal evaluation)."""
+    snaps = pd.read_csv(os.path.join(DATA_DIR, 'full_snapshots.csv'))
+    matches = pd.read_csv(os.path.join(DATA_DIR, 'matches_full.csv'))
+    matches = matches[['match_id', 'match_date']]
+    snaps = snaps.merge(matches, on='match_id', how='left')
+    snaps['match_date'] = pd.to_datetime(snaps['match_date'])
+    snaps['season'] = snaps['match_date'].dt.year
+    snaps.loc[snaps['match_date'].dt.month < 8, 'season'] = snaps['season'] - 1
+    snaps['label_cls'] = snaps['final_result'].map({'H':0, 'D':1, 'A':2})
+    return snaps
 
-X_pre_val = val_pre[pre_feat_cols].values
-y_pre_val_cls = val_pre['label_result'].map({'H':0, 'D':1, 'A':2}).values
-y_pre_val_reg = val_pre['label_goal_diff'].values
+def get_features_labels_prematch(df):
+    """Extract pre-match features and labels."""
+    feature_cols = [c for c in df.columns if c not in [
+        'match_id', 'match_date', 'home_team', 'away_team',
+        'label_goal_diff', 'label_result', 'result', 'season',
+        'competition_id', 'label'
+    ]]
+    X = df[feature_cols].values
+    y = df['label'].values
+    return X, y
 
-X_pre_test = test_pre[pre_feat_cols].values
-y_pre_test_cls = test_pre['label_result'].map({'H':0, 'D':1, 'A':2}).values
-y_pre_test_reg = test_pre['label_goal_diff'].values
+def get_features_labels_snapshot(snaps_df):
+    """Extract snapshot features and labels."""
+    feature_cols = [c for c in snaps_df.columns if c not in [
+        'match_id', 'snapshot_time', 'final_goal_diff', 'final_result',
+        'match_date', 'season', 'label_cls'
+    ]]
+    X = snaps_df[feature_cols].values
+    y = snaps_df['label_cls'].values
+    return X, y
 
-# In-play snapshots features
-snap_feat_cols = [c for c in train_snap.columns if c not in 
-                  ['match_id', 'snapshot_time', 'final_goal_diff', 'final_result']]
-X_snap_train = train_snap[snap_feat_cols].values
-y_snap_train_cls = train_snap['final_result'].map({'H':0, 'D':1, 'A':2}).values
-y_snap_train_reg = train_snap['final_goal_diff'].values
-
-X_snap_val = val_snap[snap_feat_cols].values
-y_snap_val_cls = val_snap['final_result'].map({'H':0, 'D':1, 'A':2}).values
-y_snap_val_reg = val_snap['final_goal_diff'].values
-
-X_snap_test = test_snap[snap_feat_cols].values
-y_snap_test_cls = test_snap['final_result'].map({'H':0, 'D':1, 'A':2}).values
-y_snap_test_reg = test_snap['final_goal_diff'].values
-
-# Store snapshot times for evaluation
-snap_times_train = train_snap['snapshot_time'].values
-snap_times_test = test_snap['snapshot_time'].values
-
-# -------------------- 3. PF-SMOTE Integration (P1) --------------------
-# We'll use PF-SMOTE as a resampler in the classification pipeline.
-# For pre-match classification (Model 1) and in-play classification (Model 3).
-# We'll wrap it in an imblearn Pipeline to ensure it only fits on training folds.
-
-from imblearn.pipeline import Pipeline as ImbPipeline
-
-def create_clf_pipeline(model, use_pf_smote=True, scaler=True):
+# ===================== MODEL PIPELINES =====================
+def create_clf_pipeline(model, resampler=None, scaler=True):
+    """
+    resampler: None, 'adasyn', 'smote', 'borderline', 'pf_smote'
+    Default: 'adasyn' (best in our comparison)
+    """
     steps = []
     if scaler:
         steps.append(('scaler', StandardScaler()))
-    if use_pf_smote:
-        steps.append(('resampler', PF_SMOTE(random_state=42)))
+    if resampler is not None:
+        if resampler == 'adasyn':
+            steps.append(('resampler', ADASYN(random_state=SEED)))
+        elif resampler == 'smote':
+            steps.append(('resampler', SMOTE(random_state=SEED)))
+        elif resampler == 'borderline':
+            steps.append(('resampler', BorderlineSMOTE(random_state=SEED)))
+        elif resampler == 'pf_smote':
+            steps.append(('resampler', PF_SMOTE(random_state=SEED)))
     steps.append(('clf', model))
     return ImbPipeline(steps)
 
-# -------------------- 4. Model Suite & Hyperparameter Tuning --------------------
-# We define a dictionary of model names and their parameter grids for tuning.
-# We'll use GridSearchCV (or RandomizedSearchCV) with 3-fold CV on the training set,
-# using the validation set as early stopping where applicable.
+def create_reg_pipeline(model, scaler=True):
+    steps = []
+    if scaler:
+        steps.append(('scaler', StandardScaler()))
+    steps.append(('reg', model))
+    return Pipeline(steps)
 
-# Classification models
+# ===================== MODEL SUITE =====================
 clf_models = {
     'Dummy': (DummyClassifier(strategy='most_frequent'), {}),
-    'KernelSVM': (SVC(probability=True, random_state=42), 
+    'KernelSVM': (SVC(probability=True, random_state=SEED), 
                   {'C': [0.1, 1, 10], 'gamma': ['scale', 'auto']}),
-    'RandomForest': (RandomForestClassifier(random_state=42),
+    'RandomForest': (RandomForestClassifier(random_state=SEED),
                      {'n_estimators': [100, 200], 'max_depth': [None, 5, 10]}),
-    'GBM': (GradientBoostingClassifier(random_state=42),
+    'GBM': (GradientBoostingClassifier(random_state=SEED),
             {'n_estimators': [100, 200], 'learning_rate': [0.05, 0.1, 0.2]}),
-    'XGBoost': (XGBClassifier(random_state=42, eval_metric='mlogloss'),
+    'XGBoost': (XGBClassifier(random_state=SEED, eval_metric='mlogloss'),
                 {'n_estimators': [100, 200], 'learning_rate': [0.05, 0.1, 0.2],
                  'max_depth': [3, 5, 7]}),
-    'LightGBM': (LGBMClassifier(random_state=42, verbose=-1),
+    'LightGBM': (LGBMClassifier(random_state=SEED, verbose=-1),
                  {'n_estimators': [100, 200], 'learning_rate': [0.05, 0.1, 0.2],
                   'num_leaves': [31, 63]}),
-    'IFX-XGBoost': (IFX_XGBoost(random_state=42, n_iterations=3),
+    'IFX-XGBoost': (IFX_XGBoost(random_state=SEED, n_iterations=3),
                     {'learning_rate': [0.05, 0.1], 'max_depth': [3, 5]})
 }
 
-# Regression models (no resampling, no calibration)
 reg_models = {
     'Dummy': (DummyRegressor(strategy='mean'), {}),
     'KernelRidge': (KernelRidge(),
                     {'alpha': [0.1, 1, 10], 'kernel': ['rbf', 'linear']}),
     'KernelSVR': (SVR(),
                   {'C': [0.1, 1, 10], 'gamma': ['scale', 'auto']}),
-    'RandomForest': (RandomForestRegressor(random_state=42),
+    'RandomForest': (RandomForestRegressor(random_state=SEED),
                      {'n_estimators': [100, 200], 'max_depth': [None, 5, 10]}),
-    'GBM': (GradientBoostingRegressor(random_state=42),
+    'GBM': (GradientBoostingRegressor(random_state=SEED),
             {'n_estimators': [100, 200], 'learning_rate': [0.05, 0.1, 0.2]}),
-    'XGBoost': (XGBRegressor(random_state=42),
+    'XGBoost': (XGBRegressor(random_state=SEED),
                 {'n_estimators': [100, 200], 'learning_rate': [0.05, 0.1, 0.2],
                  'max_depth': [3, 5, 7]}),
-    'LightGBM': (LGBMRegressor(random_state=42, verbose=-1),
+    'LightGBM': (LGBMRegressor(random_state=SEED, verbose=-1),
                  {'n_estimators': [100, 200], 'learning_rate': [0.05, 0.1, 0.2],
                   'num_leaves': [31, 63]}),
-    'IFX-XGBoost': (IFX_XGBoost(random_state=42, n_iterations=3, objective='reg:squarederror'),
+    'IFX-XGBoost': (IFX_XGBoost(random_state=SEED, n_iterations=3, objective='reg:squarederror'),
                     {'learning_rate': [0.05, 0.1], 'max_depth': [3, 5]})
 }
 
-# We will tune using GridSearchCV with 3-fold CV on the training set.
-def tune_model(model, param_grid, X_train, y_train, X_val=None, scoring='neg_log_loss'):
-    """Return best estimator after GridSearchCV."""
-    if model.__class__.__name__ == 'IFX_XGBoost':
-        # IFX has its own validation set; we won't use GridSearchCV.
-        # Instead we will train with different params manually.
-        # We'll pick a default set.
-        return model
-    # For other models, use GridSearchCV.
-    # We'll also include early stopping for XGBoost and LightGBM
-    # But we'll keep simple.
-    from sklearn.model_selection import GridSearchCV
-    if X_val is not None and hasattr(model, 'eval_set'):
-        pass
-    gs = GridSearchCV(model, param_grid, cv=3, scoring=scoring, n_jobs=-1, verbose=0)
-    gs.fit(X_train, y_train)
-    return gs.best_estimator_
+# ===================== TEMPORAL FOLDS =====================
+def get_temporal_folds(df, min_train_seasons=3, window_size=None):
+    seasons = sorted(df['season'].unique())
+    folds = []
+    for i in range(min_train_seasons, len(seasons)):
+        test_season = seasons[i]
+        if window_size is None:
+            train_seasons = seasons[:i]
+        else:
+            train_seasons = seasons[max(0, i-window_size):i]
+        train_mask = df['season'].isin(train_seasons)
+        test_mask = df['season'] == test_season
+        if train_mask.sum() >= MIN_TRAIN_MATCHES and test_mask.sum() >= MIN_TEST_MATCHES:
+            folds.append((train_mask, test_mask))
+    return folds
 
-# -------------------- 5. Calibration & Metrics --------------------
-# We'll use Platt scaling (CalibratedClassifierCV with method='sigmoid')
-# on all probabilistic classifiers. For classifiers that output probabilities,
-# we can apply calibration on the validation set.
-# We'll also compute ECE (Expected Calibration Error) and reliability diagrams.
-
-from sklearn.calibration import calibration_curve
-
+# ===================== CALIBRATION & METRICS =====================
 def compute_ece(y_true, y_prob, n_bins=10):
-    """Expected Calibration Error."""
     bin_counts, bin_edges = np.histogram(y_prob, bins=n_bins, range=(0,1))
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
     bin_true = np.zeros(n_bins)
@@ -221,806 +206,1005 @@ def compute_ece(y_true, y_prob, n_bins=10):
     ece = np.sum(bin_counts * np.abs(bin_accuracy - bin_confidence)) / np.sum(bin_counts)
     return ece
 
-from sklearn.isotonic import IsotonicRegression
+def evaluate_classifier_temporal(model, X_train, y_train, X_test, y_test, calibrate=True,
+                                 calib_method='auto', already_fitted=False):
+    """
+    Fit model (if not already_fitted), calibrate using inner validation, evaluate.
+    calib_method: 'auto', 'platt', 'isotonic', 'none'
+    already_fitted: True if model has been fitted externally (e.g., IFX)
+    """
+    # If model is not already fitted, fit it on the full training set
+    if not already_fitted:
+        model.fit(X_train, y_train)
 
-def evaluate_classifier(model, X_train, y_train, X_test, y_test, model_name, task, calibrate=True, X_cal=None, y_cal=None):
-    """
-    Evaluate classifier on test set.
-    Returns both uncalibrated and calibrated metrics (if calibrate=True).
-    """
-    # Get raw (uncalibrated) probabilities on test set
+    # Raw probabilities on test
     probs_uncal = model.predict_proba(X_test)
-    n_classes = probs_uncal.shape[1]
 
-    # ----- Uncalibrated metrics -----
-    ll_uncal = log_loss(y_test, probs_uncal)
-    brier_uncal = np.mean([brier_score_loss((y_test == i).astype(int), probs_uncal[:, i]) for i in range(n_classes)])
-    ece_uncal = np.mean([compute_ece((y_test == i).astype(int), probs_uncal[:, i]) for i in range(n_classes)])
-    # RPS (uncalibrated)
-    rps_list = []
-    for i in range(len(y_test)):
-        true_label = y_test[i]
-        cum_pred = np.cumsum(probs_uncal[i, :])
-        cum_true = np.zeros(n_classes)
-        cum_true[true_label:] = 1
-        rps_list.append(np.sum((cum_pred[:-1] - cum_true[:-1]) ** 2))
-    rps_uncal = np.mean(rps_list)
-    acc_uncal = accuracy_score(y_test, np.argmax(probs_uncal, axis=1))
+    if not calibrate or calib_method == 'none':
+        ll = log_loss(y_test, probs_uncal) if len(set(y_test)) > 1 else np.nan
+        acc = accuracy_score(y_test, np.argmax(probs_uncal, axis=1))
+        rps = np.mean([np.sum((np.cumsum(probs_uncal[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+        brier = np.mean([brier_score_loss((y_test==c).astype(int), probs_uncal[:,c]) for c in range(3)])
+        return {'log_loss': ll, 'accuracy': acc, 'rps': rps, 'brier': brier}
 
-    # ----- Calibrated probabilities (if requested) -----
-    if calibrate and X_cal is not None and y_cal is not None:
-        try:
-            from sklearn.calibration import CalibratedClassifierCV
+    if already_fitted:
+        ll = log_loss(y_test, probs_uncal) if len(set(y_test)) > 1 else np.nan
+        acc = accuracy_score(y_test, np.argmax(probs_uncal, axis=1))
+        rps = np.mean([np.sum((np.cumsum(probs_uncal[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+        brier = np.mean([brier_score_loss((y_test==c).astype(int), probs_uncal[:,c]) for c in range(3)])
+        return {'log_loss': ll, 'accuracy': acc, 'rps': rps, 'brier': brier}
+
+    # Create inner validation split from training data (last 20%)
+    n_train = len(X_train)
+    cal_size = max(10, int(n_train * 0.2))
+    X_inner_train = X_train[:n_train-cal_size]
+    y_inner_train = y_train[:n_train-cal_size]
+    X_cal = X_train[n_train-cal_size:]
+    y_cal = y_train[n_train-cal_size:]
+
+    # Fit model on inner_train
+    model.fit(X_inner_train, y_inner_train)
+
+    # Get probabilities on calibration set
+    probs_cal = model.predict_proba(X_cal)
+
+    # Calibrate
+    try:
+        if calib_method == 'isotonic':
+            n_classes = probs_uncal.shape[1]
+            probs_cal_final = np.zeros_like(probs_uncal)
+            for c in range(n_classes):
+                iso = IsotonicRegression(out_of_bounds='clip')
+                iso.fit(probs_cal[:, c], (y_cal == c).astype(int))
+                probs_cal_final[:, c] = iso.predict(probs_uncal[:, c])
+            probs_cal_final = probs_cal_final / probs_cal_final.sum(axis=1, keepdims=True)
+            probs_cal = probs_cal_final
+        else:
+            # Default: Platt scaling
             calibrator = CalibratedClassifierCV(estimator=model, method='sigmoid', cv='prefit')
             calibrator.fit(X_cal, y_cal)
             probs_cal = calibrator.predict_proba(X_test)
-        except (ValueError, TypeError, AttributeError):
-            # Fallback: Isotonic per class
-            probs_cal = model.predict_proba(X_cal)  # on calibration set
-            calibrated_probs = np.zeros_like(probs_uncal)
-            for i in range(n_classes):
-                iso = IsotonicRegression(out_of_bounds='clip')
-                iso.fit(probs_cal[:, i], (y_cal == i).astype(int))
-                calibrated_probs[:, i] = iso.predict(probs_uncal[:, i])
-            probs_cal = calibrated_probs / calibrated_probs.sum(axis=1, keepdims=True)
-    else:
-        probs_cal = probs_uncal  # use uncalibrated if calibration not performed
+    except Exception as e:
+        # Fallback: use uncalibrated if calibration fails
+        probs_cal = probs_uncal
 
-    # ----- Calibrated metrics -----
-    ll_cal = log_loss(y_test, probs_cal)
-    brier_cal = np.mean([brier_score_loss((y_test == i).astype(int), probs_cal[:, i]) for i in range(n_classes)])
-    ece_cal = np.mean([compute_ece((y_test == i).astype(int), probs_cal[:, i]) for i in range(n_classes)])
-    rps_list_cal = []
-    for i in range(len(y_test)):
-        true_label = y_test[i]
-        cum_pred = np.cumsum(probs_cal[i, :])
-        cum_true = np.zeros(n_classes)
-        cum_true[true_label:] = 1
-        rps_list_cal.append(np.sum((cum_pred[:-1] - cum_true[:-1]) ** 2))
-    rps_cal = np.mean(rps_list_cal)
-    acc_cal = accuracy_score(y_test, np.argmax(probs_cal, axis=1))
+    # Metrics
+    ll = log_loss(y_test, probs_cal) if len(set(y_test)) > 1 else np.nan
+    acc = accuracy_score(y_test, np.argmax(probs_cal, axis=1))
+    rps = np.mean([np.sum((np.cumsum(probs_cal[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+    brier = np.mean([brier_score_loss((y_test==c).astype(int), probs_cal[:,c]) for c in range(3)])
+    return {'log_loss': ll, 'accuracy': acc, 'rps': rps, 'brier': brier}
 
-    return {
-        # Uncalibrated
-        'log_loss_uncal': ll_uncal,
-        'brier_uncal': brier_uncal,
-        'ece_uncal': ece_uncal,
-        'rps_uncal': rps_uncal,
-        'accuracy_uncal': acc_uncal,
-        # Calibrated
-        'log_loss': ll_cal,
-        'brier': brier_cal,
-        'ece': ece_cal,
-        'rps': rps_cal,
-        'accuracy': acc_cal
-    }
-
-def evaluate_regressor(model, X, y_true):
-    y_pred = model.predict(X)
-    mae = mean_absolute_error(y_true, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-    corr = np.corrcoef(y_true, y_pred)[0,1]
+def evaluate_regressor_temporal(model, X_train, y_train, X_test, y_test):
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    mae = mean_absolute_error(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    corr = np.corrcoef(y_test, y_pred)[0,1]
     return {'mae': mae, 'rmse': rmse, 'corr': corr}
 
-# -------------------- 6. Run All Models (Pre-match and In-play) --------------------
-# We'll loop over the model dictionaries, fit, and evaluate.
-# We'll store results in a DataFrame for reporting.
-
-results_cls = []
-results_reg = []
-
-# Pre-match classification
-for name, (model, param_grid) in clf_models.items():
-    print(f"Training {name} (pre-match classification)...")
-    if name == 'IFX-XGBoost':
-        model = IFX_XGBoost(random_state=42, n_iterations=3,
-                            objective='multi:softprob', num_class=3)
-        model.fit(X_pre_train, y_pre_train_cls, X_pre_val, y_pre_val_cls)
-        best_model = model
-    else:
-        from sklearn.model_selection import GridSearchCV
-        pipe = create_clf_pipeline(model, use_pf_smote=True, scaler=True)
-        param_grid_adj = {}
-        for k, v in param_grid.items():
-            param_grid_adj['clf__' + k] = v
-        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
-        gs.fit(X_pre_train, y_pre_train_cls)
-        best_model = gs.best_estimator_
-    # Evaluate on test
-    res = evaluate_classifier(best_model, X_pre_train, y_pre_train_cls,
-                              X_pre_test, y_pre_test_cls,
-                              model_name=name, task='pre_cls',
-                              calibrate=True, X_cal=X_pre_val, y_cal=y_pre_val_cls)
-    res['model'] = name
-    results_cls.append(res)
-
-# Pre-match regression
-for name, (model, param_grid) in reg_models.items():
-    print(f"Training {name} (pre-match regression)...")
-    if name == 'IFX-XGBoost':
-        model = IFX_XGBoost(random_state=42, n_iterations=3, objective='reg:squarederror')
-        model.fit(X_pre_train, y_pre_train_reg, X_pre_val, y_pre_val_reg)
-        best_model = model
-    else:
-        # For regression, we don't resample. We'll use a pipeline with scaling.
-        from sklearn.pipeline import Pipeline
-        pipe = Pipeline([('scaler', StandardScaler()), ('reg', model)])
-        # GridSearchCV
-        from sklearn.model_selection import GridSearchCV
-        param_grid_adj = {}
-        for k, v in param_grid.items():
-            param_grid_adj['reg__' + k] = v
-        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_mean_absolute_error', n_jobs=-1, verbose=0)
-        gs.fit(X_pre_train, y_pre_train_reg)
-        best_model = gs.best_estimator_
-    res = evaluate_regressor(best_model, X_pre_test, y_pre_test_reg)
-    res['model'] = name
-    results_reg.append(res)
-
-
-# ======================================================================
-# IN-PLAY LOOPS + PART 7
-# ======================================================================
-
-# -------------------- In-Play Classification Loop --------------------
-best_inplay_clf = None
-best_inplay_reg = None
-best_inplay_clf_score = np.inf   # validation log-loss
-best_inplay_reg_score = np.inf   # validation MAE
-
-for name, (model, param_grid) in clf_models.items():
-    print(f"Training {name} (in-play classification)...")
-    if name == 'IFX-XGBoost':
-        model = IFX_XGBoost(random_state=42, n_iterations=3)
-        model.fit(X_snap_train, y_snap_train_cls, X_snap_val, y_snap_val_cls)
-        best_model = model
-        # Compute validation log-loss for IFX
-        val_probs = model.predict_proba(X_snap_val)
-        val_score = log_loss(y_snap_val_cls, val_probs)
-    elif name in ['KernelSVM', 'KernelRidge']:
-        print(f"   ***Using Nystroem approximation for {name} (large dataset)***")
-        pipe = Pipeline([
-            ('scaler', StandardScaler()),
-            ('kernel_approx', Nystroem(kernel='rbf', random_state=42)),
-            ('clf', SGDClassifier(loss='log_loss', random_state=42, max_iter=1000, tol=1e-3))
-        ])
-        param_grid_adj = {
-            'clf__alpha': [0.0001, 0.001, 0.01],
-            'kernel_approx__n_components': [50, 100, 200]
-        }
-        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
-        gs.fit(X_snap_train, y_snap_train_cls)
-        best_model = gs.best_estimator_
-        val_score = -gs.best_score_ 
-    else:
-        pipe = create_clf_pipeline(model, use_pf_smote=True, scaler=True)
-        param_grid_adj = {}
-        for k, v in param_grid.items():
-            param_grid_adj['clf__' + k] = v
-        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_log_loss', n_jobs=-1, verbose=0)
-        gs.fit(X_snap_train, y_snap_train_cls)
-        best_model = gs.best_estimator_
-        val_score = -gs.best_score_
-    # Store if best so far
-    if val_score < best_inplay_clf_score:
-        best_inplay_clf_score = val_score
-        best_inplay_clf = best_model
-    # Evaluate on test
-    res = evaluate_classifier(best_model, X_snap_train, y_snap_train_cls,
-                              X_snap_test, y_snap_test_cls,
-                              model_name=name, task='inplay_cls',
-                              calibrate=True, X_cal=X_snap_val, y_cal=y_snap_val_cls)
-    res['model'] = name
-    results_cls.append(res)
-
-# -------------------- In-Play Regression Loop --------------------
-for name, (model, param_grid) in reg_models.items():
-    print(f"Training {name} (in-play regression)...")
-    if name == 'IFX-XGBoost':
-        model = IFX_XGBoost(random_state=42, n_iterations=3, objective='reg:squarederror')
-        model.fit(X_snap_train, y_snap_train_reg, X_snap_val, y_snap_val_reg)
-        best_model = model
-        val_preds = model.predict(X_snap_val)
-        val_score = mean_absolute_error(y_snap_val_reg, val_preds)
-    elif name in ['KernelRidge', 'KernelSVR']:
-        print(f"   ***Using Nystroem approximation for {name} (large dataset)***")
-        pipe = Pipeline([
-            ('scaler', StandardScaler()),
-            ('kernel_approx', Nystroem(kernel='rbf', random_state=42)),
-            ('reg', SGDRegressor(random_state=42, max_iter=1000, tol=1e-3))
-        ])
-        param_grid_adj = {
-            'reg__alpha': [0.0001, 0.001, 0.01],
-            'kernel_approx__n_components': [50, 100, 200]
-        }
-        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_mean_absolute_error', n_jobs=-1, verbose=0)
-        gs.fit(X_snap_train, y_snap_train_reg)
-        best_model = gs.best_estimator_
-        val_score = -gs.best_score_
-    else:
-        pipe = Pipeline([('scaler', StandardScaler()), ('reg', model)])
-        param_grid_adj = {}
-        for k, v in param_grid.items():
-            param_grid_adj['reg__' + k] = v
-        gs = GridSearchCV(pipe, param_grid_adj, cv=3, scoring='neg_mean_absolute_error', n_jobs=-1, verbose=0)
-        gs.fit(X_snap_train, y_snap_train_reg)
-        best_model = gs.best_estimator_
-        val_score = -gs.best_score_
-    # Store if best so far
-    if val_score < best_inplay_reg_score:
-        best_inplay_reg_score = val_score
-        best_inplay_reg = best_model
-    # Evaluate on test
-    res = evaluate_regressor(best_model, X_snap_test, y_snap_test_reg)
-    res['model'] = name
-    results_reg.append(res)
-
-# Convert results to DataFrames
-df_cls_results = pd.DataFrame(results_cls)
-df_reg_results = pd.DataFrame(results_reg)
-print("Classification results:")
-print(df_cls_results)
-print("Regression results:")
-print(df_reg_results)
-
-# ======================================================================
-# PART 7: IN-PLAY EVALUATION (USING THE BEST MODELS)
-# ======================================================================
-
-def eval_per_minute_cls(model, X, y, times):
-    """Compute log-loss per 15-minute phase for classification."""
-    bins = np.arange(0, 95, 15)
-    metrics = []
-    for i in range(len(bins)-1):
-        mask = (times >= bins[i]) & (times < bins[i+1])
-        if np.sum(mask) == 0:
-            metrics.append(np.nan)
+# ===================== MAIN TEMPORAL LOOP (PRE-MATCH) =====================
+def run_temporal_prematch_classification(df, model_name):
+    folds = get_temporal_folds(df, min_train_seasons=3, window_size=WINDOW_SIZE)
+    results = []
+    for train_mask, test_mask in folds:
+        train_df = df[train_mask]
+        test_df = df[test_mask]
+        X_train, y_train = get_features_labels_prematch(train_df)
+        X_test, y_test = get_features_labels_prematch(test_df)
+        model, param_grid = clf_models[model_name]
+        already_fitted = False
+        if model_name == 'IFX-XGBoost':
+            model = IFX_XGBoost(random_state=SEED, n_iterations=3)
+            model.fit(X_train, y_train)
+            already_fitted = True
         else:
-            y_prob = model.predict_proba(X[mask])
-            metrics.append(log_loss(y[mask], y_prob))
-    return bins[:-1], metrics
+            model = create_clf_pipeline(model, resampler='adasyn', scaler=True)
+        metrics = evaluate_classifier_temporal(model, X_train, y_train, X_test, y_test,
+                                               calibrate=CALIBRATE, already_fitted=already_fitted)
+        metrics['test_season'] = test_df['season'].iloc[0]
+        metrics['model'] = model_name
+        results.append(metrics)
+    return pd.DataFrame(results)
 
-def eval_per_minute_reg(model, X, y, times):
-    """Compute MAE per 15-minute phase for regression."""
-    bins = np.arange(0, 95, 15)
-    metrics = []
-    for i in range(len(bins)-1):
-        mask = (times >= bins[i]) & (times < bins[i+1])
-        if np.sum(mask) == 0:
-            metrics.append(np.nan)
+def run_temporal_prematch_regression(df, model_name):
+    folds = get_temporal_folds(df, min_train_seasons=3, window_size=WINDOW_SIZE)
+    results = []
+    for train_mask, test_mask in folds:
+        train_df = df[train_mask]
+        test_df = df[test_mask]
+        X_train, y_train = get_features_labels_prematch(train_df)
+        X_test, y_test = get_features_labels_prematch(test_df)
+        model, param_grid = reg_models[model_name]
+        if model_name == 'IFX-XGBoost':
+            model = IFX_XGBoost(random_state=SEED, n_iterations=3, objective='reg:squarederror')
+            model.fit(X_train, y_train)
         else:
-            y_pred = model.predict(X[mask])
-            metrics.append(mean_absolute_error(y[mask], y_pred))
-    return bins[:-1], metrics
+            model = create_reg_pipeline(model, scaler=True)
+        metrics = evaluate_regressor_temporal(model, X_train, y_train, X_test, y_test)
+        metrics['test_season'] = test_df['season'].iloc[0]
+        metrics['model'] = model_name
+        results.append(metrics)
+    return pd.DataFrame(results)
 
-# ----------------------------------------------------------------------
-# 7a. Per-phase metrics for the best in-play models
-# ----------------------------------------------------------------------
-# Use the best models stored during loops
-if best_inplay_clf is None:
-    # Fallback: retrain a simple XGBoost
-    best_inplay_clf = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
-    best_inplay_clf.fit(X_snap_train, y_snap_train_cls)
-if best_inplay_reg is None:
-    best_inplay_reg = XGBRegressor(random_state=42, n_estimators=100, learning_rate=0.1)
-    best_inplay_reg.fit(X_snap_train, y_snap_train_reg)
+# ===================== MAIN TEMPORAL LOOP (IN-PLAY) =====================
+def run_temporal_inplay_classification(snaps_df, df_pre, model_name):
+    folds = get_temporal_folds(df_pre, min_train_seasons=3, window_size=WINDOW_SIZE)
+    results = []
+    snap_feature_cols = [c for c in snaps_df.columns if c not in [
+        'match_id', 'snapshot_time', 'final_goal_diff', 'final_result',
+        'match_date', 'season', 'label_cls'
+    ]]
+    for train_mask, test_mask in folds:
+        train_matches = df_pre[train_mask]['match_id'].values
+        test_matches = df_pre[test_mask]['match_id'].values
+        train_snaps = snaps_df[snaps_df['match_id'].isin(train_matches)]
+        test_snaps = snaps_df[snaps_df['match_id'].isin(test_matches)]
+        if len(train_snaps) < MIN_TRAIN_MATCHES or len(test_snaps) < MIN_TEST_MATCHES:
+            continue
+        X_train = train_snaps[snap_feature_cols].values
+        y_train = train_snaps['label_cls'].values
+        X_test = test_snaps[snap_feature_cols].values
+        y_test = test_snaps['label_cls'].values
 
-# Log-loss per phase (classification)
-bins, ll_per_phase = eval_per_minute_cls(best_inplay_clf, X_snap_test, y_snap_test_cls, snap_times_test)
-plt.figure()
-plt.plot(bins + 7.5, ll_per_phase, marker='o', label='In-play (best model)')
-plt.xlabel('Match minute (phase)')
-plt.ylabel('Log-Loss')
-plt.title('In-play classification log-loss per game phase')
-plt.legend()
-plt.savefig(os.path.join(FIGURES_DIR, 'inplay_logloss_per_phase.png'))
-plt.close()
-
-# MAE per phase (regression)
-bins, mae_per_phase = eval_per_minute_reg(best_inplay_reg, X_snap_test, y_snap_test_reg, snap_times_test)
-plt.figure()
-plt.plot(bins + 7.5, mae_per_phase, marker='o', label='In-play (best model)')
-plt.xlabel('Match minute (phase)')
-plt.ylabel('MAE')
-plt.title('In-play regression MAE per game phase')
-plt.legend()
-plt.savefig(os.path.join(FIGURES_DIR, 'inplay_mae_per_phase.png'))
-plt.close()
-
-# ----------------------------------------------------------------------
-# 7b. Frozen pre-match baseline (using the best pre-match model)
-# ----------------------------------------------------------------------
-# Train a pre-match model (we can use XGBoost with default params)
-pre_model = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
-pre_model.fit(X_pre_train, y_pre_train_cls)
-pre_reg = XGBRegressor(random_state=42, n_estimators=100, learning_rate=0.1)
-pre_reg.fit(X_pre_train, y_pre_train_reg)
-
-# Map each snapshot's match_id to its pre-match feature vector
-# Use test_pre to get the features
-test_pre_feat = test_pre[pre_feat_cols].values
-test_pre_ids = test_pre['match_id'].values
-pre_feat_dict = dict(zip(test_pre_ids, test_pre_feat))
-
-snap_ids = test_snap['match_id'].values
-pre_feat_for_snap = np.array([pre_feat_dict[mid] for mid in snap_ids])
-
-# Pre-match predictions (probabilities and margin)
-pre_prob = pre_model.predict_proba(pre_feat_for_snap)
-pre_margin = pre_reg.predict(pre_feat_for_snap)
-
-# Compute log-loss per phase for pre-match baseline
-def eval_per_minute_probs(probs, y, times):
-    bins = np.arange(0, 95, 15)
-    metrics = []
-    for i in range(len(bins)-1):
-        mask = (times >= bins[i]) & (times < bins[i+1])
-        if np.sum(mask) == 0:
-            metrics.append(np.nan)
+        already_fitted = False
+        if model_name in ['KernelSVM', 'KernelRidge']:
+            # Use Nystroem approximation for large data
+            pipe = Pipeline([
+                ('scaler', StandardScaler()),
+                ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=SEED)),
+                ('clf', SGDClassifier(loss='log_loss', random_state=SEED, max_iter=1000, tol=1e-3))
+            ])
+            model = pipe
         else:
-            metrics.append(log_loss(y[mask], probs[mask]))
-    return bins[:-1], metrics
-
-bins, ll_pre = eval_per_minute_probs(pre_prob, y_snap_test_cls, snap_times_test)
-
-# Plot both curves (in-play vs frozen pre-match)
-plt.figure()
-plt.plot(bins + 7.5, ll_per_phase, marker='o', label='In-play (best model)')
-plt.plot(bins + 7.5, ll_pre, marker='s', label='Frozen pre-match')
-plt.xlabel('Match minute (phase)')
-plt.ylabel('Log-Loss')
-plt.title('In-play classification: In-play vs Frozen Pre-match')
-plt.legend()
-plt.savefig(os.path.join(FIGURES_DIR, 'inplay_vs_pre_logloss.png'))
-plt.close()
-
-# For regression, compute MAE per phase for pre-match
-def eval_per_minute_preds(preds, y, times):
-    bins = np.arange(0, 95, 15)
-    metrics = []
-    for i in range(len(bins)-1):
-        mask = (times >= bins[i]) & (times < bins[i+1])
-        if np.sum(mask) == 0:
-            metrics.append(np.nan)
-        else:
-            metrics.append(mean_absolute_error(y[mask], preds[mask]))
-    return bins[:-1], metrics
-
-bins, mae_pre = eval_per_minute_preds(pre_margin, y_snap_test_reg, snap_times_test)
-
-plt.figure()
-plt.plot(bins + 7.5, mae_per_phase, marker='o', label='In-play (best model)')
-plt.plot(bins + 7.5, mae_pre, marker='s', label='Frozen pre-match')
-plt.xlabel('Match minute (phase)')
-plt.ylabel('MAE')
-plt.title('In-play regression: In-play vs Frozen Pre-match')
-plt.legend()
-plt.savefig(os.path.join(FIGURES_DIR, 'inplay_vs_pre_mae.png'))
-plt.close()
-
-# ----------------------------------------------------------------------
-# 7c. Reliability diagrams for the best classification model
-# ----------------------------------------------------------------------
-from sklearn.calibration import calibration_curve
-
-def plot_reliability_diagram(y_true, y_prob, model_name, task, n_bins=10):
-    fig, axes = plt.subplots(1, y_prob.shape[1], figsize=(4*y_prob.shape[1], 4))
-    if y_prob.shape[1] == 1:
-        axes = [axes]
-    for i, ax in enumerate(axes):
-        fraction_of_positives, mean_predicted_value = calibration_curve(
-            (y_true == i).astype(int), y_prob[:, i], n_bins=n_bins
-        )
-        ax.plot(mean_predicted_value, fraction_of_positives, "s-", label="Model")
-        ax.plot([0, 1], [0, 1], "k--", label="Perfect")
-        ax.set_xlabel("Mean predicted probability")
-        ax.set_ylabel("Fraction of positives")
-        ax.set_title(f"Class {i}")
-        ax.legend()
-    plt.suptitle(f"Reliability diagram – {model_name} ({task})")
-    plt.savefig(os.path.join(FIGURES_DIR, f'reliability_{model_name}_{task}.png'))
-    plt.close()
-
-# Get probabilities from the best in-play classifier on test set
-best_probs = best_inplay_clf.predict_proba(X_snap_test)
-plot_reliability_diagram(y_snap_test_cls, best_probs, 
-                         model_name='Best In-play Classifier', task='inplay')
-
-# Also for the pre-match classifier (optional)
-pre_probs = pre_model.predict_proba(X_pre_test)
-plot_reliability_diagram(y_pre_test_cls, pre_probs,
-                         model_name='Best Pre-match Classifier', task='pre')
-
-print("Part 7 done: per-phase evaluation, frozen baseline comparison, and reliability diagrams saved.")
-
-# -------------------- 8. Compute Cost & Kernel Scaling Analysis --------------------
-
-def measure_training(model, X, y):
-    """Fit model and return time and memory."""
-    process = psutil.Process()
-    mem_before = process.memory_info().rss / 1024**2  # MB
-    start = time.time()
-    model.fit(X, y)
-    end = time.time()
-    mem_after = process.memory_info().rss / 1024**2
-    return end-start, mem_after - mem_before
-
-subsample_sizes = [100, 500, 1000, 2000, 5000]
-kernel_times = []
-for n in subsample_sizes:
-    if n > len(X_pre_train):
-        break
-    X_sub = X_pre_train[:n]
-    y_sub = y_pre_train_reg[:n]
-    model = KernelRidge(alpha=1.0, kernel='rbf')
-    t, _ = measure_training(model, X_sub, y_sub)
-    kernel_times.append(t)
-    gc.collect()
-
-plt.figure()
-plt.plot(subsample_sizes[:len(kernel_times)], kernel_times, marker='o')
-plt.xlabel('Training sample size')
-plt.ylabel('Time (seconds)')
-plt.title('Kernel Ridge scaling (O(n^2))')
-plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling.png'))
-
-# Approximate kernel scaling (Nystroem)
-approx_times = []
-for n in subsample_sizes:
-    if n > len(X_pre_train):
-        break
-    X_sub = X_pre_train[:n]
-    y_sub = y_pre_train_reg[:n]
-    pipe = Pipeline([
-        ('scaler', StandardScaler()),
-        ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=42)),
-        ('reg', Ridge(alpha=1.0))
-    ])
-    t, _ = measure_training(pipe, X_sub, y_sub)
-    approx_times.append(t)
-
-plt.figure()
-plt.plot(subsample_sizes[:len(kernel_times)], kernel_times, marker='o', label='Exact KernelRidge')
-plt.plot(subsample_sizes[:len(approx_times)], approx_times, marker='s', label='Approx (Nystroem+Ridge)')
-plt.xlabel('Training sample size')
-plt.ylabel('Time (seconds)')
-plt.title('Kernel Scaling: Exact vs. Approximate')
-plt.legend()
-plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling_comparison.png'))
-plt.close()
-
-# -------------------- 9. SHAP Analysis (Preliminary) --------------------
-shap_model = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
-shap_model.fit(X_pre_train, y_pre_train_cls)
-
-# SHAP on first 100 test samples (to keep runtime manageable)
-explainer = shap.TreeExplainer(shap_model)
-shap_values = explainer.shap_values(X_pre_test[:100])
-
-# Global summary plot (beeswarm)
-shap.summary_plot(shap_values, X_pre_test[:100], feature_names=pre_feat_cols, show=False)
-plt.savefig(os.path.join(FIGURES_DIR, 'shap_summary.png'))
-plt.close()
-
-# ----- Local waterfall plot for the first test sample (predicted class) -----
-# Get predicted class for the first sample
-pred_class = np.argmax(shap_model.predict_proba(X_pre_test[:1])[0])
-# Create a shap.Explanation object for that class
-explanation = shap.Explanation(
-    values=shap_values[pred_class][0],
-    base_values=explainer.expected_value[pred_class],
-    data=X_pre_test[0],
-    feature_names=pre_feat_cols
-)
-shap.plots.waterfall(explanation, show=False)
-plt.savefig(os.path.join(FIGURES_DIR, 'shap_waterfall.png'))
-plt.close()
-
-print("SHAP preliminary analysis complete. Plots saved.")
-
-# ----- Worst prediction alanysis -----
-def worst_predictions_analysis(model, X, y_true, feature_names, model_name, task, top_k=10):
-    """
-    Identify the top_k worst predictions and save SHAP explanations.
-    Handles plain models, pipelines, and IFX_XGBoost wrappers.
-    """
-    # Keep the original model for predictions (handles numpy arrays)
-    pred_model = model
-
-    # Extract the underlying tree model for SHAP
-    shap_model = None
-    if hasattr(model, 'model') and isinstance(model.model, xgb.Booster):
-        # IFX_XGBoost
-        shap_model = model.model
-    elif hasattr(model, 'steps'):
-        # Pipeline: take the last estimator
-        last_est = model.steps[-1][1]
-        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
-            shap_model = last_est.model
-        else:
-            shap_model = last_est
-    elif hasattr(model, 'named_steps'):
-        # Imblearn pipeline
-        last_est = model.named_steps[list(model.named_steps.keys())[-1]]
-        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
-            shap_model = last_est.model
-        else:
-            shap_model = last_est
-    else:
-        shap_model = model
-
-    # Determine worst indices using the prediction model
-    if task == 'classification':
-        probs = pred_model.predict_proba(X)
-        per_sample_ll = [-np.log(probs[i, y_true[i]]) for i in range(len(y_true))]
-        worst_idx = np.argsort(per_sample_ll)[-top_k:]
-        worst_scores = [per_sample_ll[i] for i in worst_idx]
-    else:  # regression
-        preds = pred_model.predict(X)
-        errors = np.abs(y_true - preds)
-        worst_idx = np.argsort(errors)[-top_k:]
-        worst_scores = [errors[i] for i in worst_idx]
-
-    # Compute SHAP using the extracted tree model
-    explainer = shap.TreeExplainer(shap_model)
-    shap_values = explainer.shap_values(X[worst_idx])
-
-    for j, idx in enumerate(worst_idx):
-        sample = X[idx]
-        true_label = y_true[idx]
-        score = worst_scores[j]
-
-        if task == 'classification':
-            pred_class = np.argmax(pred_model.predict_proba([sample])[0])
-
-            if isinstance(shap_values, list):
-                # List of arrays (one per class)
-                class_shap = shap_values[pred_class][j]
-                base = explainer.expected_value[pred_class]
-            elif hasattr(shap_values, 'ndim') and shap_values.ndim == 3:
-                # 3D array: (samples, features, classes)
-                class_shap = shap_values[j, :, pred_class]
-                base = explainer.expected_value[pred_class]
+            model, param_grid = clf_models[model_name]
+            if model_name == 'IFX-XGBoost':
+                model = IFX_XGBoost(random_state=SEED, n_iterations=3)
+                model.fit(X_train, y_train)
+                already_fitted = True
             else:
-                # Binary / fallback
-                class_shap = shap_values[j]
-                base = explainer.expected_value
+                model = create_clf_pipeline(model, resampler='adasyn', scaler=True)
+        metrics = evaluate_classifier_temporal(model, X_train, y_train, X_test, y_test,
+                                               calibrate=CALIBRATE, already_fitted=already_fitted)
+        metrics['test_season'] = df_pre[test_mask]['season'].iloc[0]
+        metrics['model'] = model_name
+        results.append(metrics)
+    return pd.DataFrame(results)
 
-            explanation = shap.Explanation(
-                values=class_shap,
-                base_values=base,
-                data=sample,
-                feature_names=feature_names
-            )
-            shap.plots.waterfall(explanation, show=False)
-            plt.title(f"{model_name} - Sample {idx} (true={true_label}, pred={pred_class}, log-loss={score:.4f})")
-
-        else:  # regression
-            if isinstance(shap_values, list):
-                shap_vals = shap_values[0][j]
-            elif hasattr(shap_values, 'ndim') and shap_values.ndim == 2:
-                shap_vals = shap_values[j]
+def run_temporal_inplay_regression(snaps_df, df_pre, model_name):
+    folds = get_temporal_folds(df_pre, min_train_seasons=3, window_size=WINDOW_SIZE)
+    results = []
+    snap_feature_cols = [c for c in snaps_df.columns if c not in [
+        'match_id', 'snapshot_time', 'final_goal_diff', 'final_result',
+        'match_date', 'season', 'label_cls'
+    ]]
+    
+    for train_mask, test_mask in folds:
+        train_matches = df_pre[train_mask]['match_id'].values
+        test_matches = df_pre[test_mask]['match_id'].values
+        train_snaps = snaps_df[snaps_df['match_id'].isin(train_matches)]
+        test_snaps = snaps_df[snaps_df['match_id'].isin(test_matches)]
+        if len(train_snaps) < MIN_TRAIN_MATCHES or len(test_snaps) < MIN_TEST_MATCHES:
+            continue
+        
+        X_train = train_snaps[snap_feature_cols].values
+        y_train = train_snaps['final_goal_diff'].values
+        X_test = test_snaps[snap_feature_cols].values
+        y_test = test_snaps['final_goal_diff'].values
+        
+        # *** IMPORTANT: For kernel models, use approximation for large data ***
+        if model_name in ['KernelRidge', 'KernelSVR']:
+            # Use Nystroem approximation + SGD regressor for speed
+            pipe = Pipeline([
+                ('scaler', StandardScaler()),
+                ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=SEED)),
+                ('reg', SGDRegressor(random_state=SEED, max_iter=1000, tol=1e-3))
+            ])
+            model = pipe
+        else:
+            model, param_grid = reg_models[model_name]
+            if model_name == 'IFX-XGBoost':
+                model = IFX_XGBoost(random_state=SEED, n_iterations=3, objective='reg:squarederror')
+                # IFX needs validation set, but we'll use a small split
+                if len(X_train) >= 100:
+                    val_size = max(10, int(len(X_train) * 0.1))
+                    model.fit(X_train[:-val_size], y_train[:-val_size], X_train[-val_size:], y_train[-val_size:])
+                else:
+                    model.fit(X_train, y_train)
             else:
-                shap_vals = shap_values[j]
-
-            explanation = shap.Explanation(
-                values=shap_vals,
-                base_values=explainer.expected_value,
-                data=sample,
-                feature_names=feature_names
-            )
-            shap.plots.waterfall(explanation, show=False)
-            plt.title(f"{model_name} - Sample {idx} (true={true_label}, pred={preds[idx]:.2f}, error={score:.2f})")
-
-        plt.tight_layout()
-        plt.savefig(os.path.join(FIGURES_DIR, f'worst_{j+1}_{model_name}_{task}.png'))
-        plt.close()
-
-    print(f"Saved {top_k} worst prediction plots for {model_name} ({task}).")
-
-# For the best in-play classifier (classification)
-worst_predictions_analysis(best_inplay_clf, X_snap_test, y_snap_test_cls,
-                           feature_names=snap_feat_cols,
-                           model_name='Best_Inplay_Classifier', task='classification')
-
-# For the best in-play regressor (regression)
-worst_predictions_analysis(best_inplay_reg, X_snap_test, y_snap_test_reg,
-                           feature_names=snap_feat_cols,
-                           model_name='Best_Inplay_Regressor', task='regression')
-
-# ======================================================================
-# RESAMPLING COMPARISON
-# ======================================================================
-from imblearn.over_sampling import SMOTE, BorderlineSMOTE, ADASYN
-
-resamplers = {
-    'None': None,
-    'PF-SMOTE': PF_SMOTE(random_state=42),
-    'SMOTE': SMOTE(random_state=42),
-    'BorderlineSMOTE': BorderlineSMOTE(random_state=42),
-    'ADASYN': ADASYN(random_state=42),
-}
-
-base_model = XGBClassifier(random_state=42, n_estimators=100, learning_rate=0.1)
-resample_results = []
-
-for name, resampler in resamplers.items():
-    print(f"Training XGBoost with {name} resampling (pre-match classification)...")
-    steps = [('scaler', StandardScaler())]
-    if resampler is not None:
-        steps.append(('resampler', resampler))
-    steps.append(('clf', base_model))
-    pipe = ImbPipeline(steps)
-    pipe.fit(X_pre_train, y_pre_train_cls)
-
-    res = evaluate_classifier(pipe, X_pre_train, y_pre_train_cls,
-                              X_pre_test, y_pre_test_cls,
-                              model_name=name, task='resample_compare',
-                              calibrate=True, X_cal=X_pre_val, y_cal=y_pre_val_cls)
-    res['resampler'] = name
-    resample_results.append(res)
-
-df_resample = pd.DataFrame(resample_results)
-print("Resampling comparison results:")
-print(df_resample[['resampler', 'log_loss', 'rps', 'accuracy', 'ece']])
-df_resample.to_csv(os.path.join(OUTPUT_DIR, 'resampling_comparison.csv'), index=False)
-
-# ======================================================================
-# SHAP TIMELINE FOR A SINGLE MATCH
-# ======================================================================
-
-def shap_timeline_for_match(match_id, clf_model, reg_model, test_snap_full, y_cls, y_reg, feature_names, fig_dir):
-    """
-    Generate SHAP timeline for a single match.
-    Extracts the underlying tree model from pipelines and IFX wrappers.
-    """
-    # Filter snapshots for this match
-    match_snap = test_snap_full[test_snap_full['match_id'] == match_id].copy()
-    if match_snap.empty:
-        print(f"No snapshots found for match {match_id}")
-        return
-
-    # Sort by time
-    match_snap = match_snap.sort_values('snapshot_time')
-    times = match_snap['snapshot_time'].values
-    X_snap = match_snap[feature_names].values
-
-    # ---------- Extract SHAP model from classifier ----------
-    shap_clf = None
-    if hasattr(clf_model, 'model') and isinstance(clf_model.model, xgb.Booster):
-        shap_clf = clf_model.model
-    elif hasattr(clf_model, 'steps'):
-        last_est = clf_model.steps[-1][1]
-        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
-            shap_clf = last_est.model
+                model = create_reg_pipeline(model, scaler=True)
+        
+        # Evaluate
+        if model_name == 'IFX-XGBoost':
+            preds = model.predict(X_test)
+            mae = mean_absolute_error(y_test, preds)
+            rmse = np.sqrt(mean_squared_error(y_test, preds))
+            corr = np.corrcoef(y_test, preds)[0,1]
+            metrics = {'mae': mae, 'rmse': rmse, 'corr': corr}
         else:
-            shap_clf = last_est
-    elif hasattr(clf_model, 'named_steps'):
-        last_est = clf_model.named_steps[list(clf_model.named_steps.keys())[-1]]
-        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
-            shap_clf = last_est.model
-        else:
-            shap_clf = last_est
-    else:
-        shap_clf = clf_model
+            metrics = evaluate_regressor_temporal(model, X_train, y_train, X_test, y_test)
+        
+        metrics['test_season'] = df_pre[test_mask]['season'].iloc[0]
+        metrics['model'] = model_name
+        results.append(metrics)
+    
+    return pd.DataFrame(results)
 
-    # ---------- Extract SHAP model from regressor ----------
-    shap_reg = None
-    if hasattr(reg_model, 'model') and isinstance(reg_model.model, xgb.Booster):
-        shap_reg = reg_model.model
-    elif hasattr(reg_model, 'steps'):
-        last_est = reg_model.steps[-1][1]
-        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
-            shap_reg = last_est.model
-        else:
-            shap_reg = last_est
-    elif hasattr(reg_model, 'named_steps'):
-        last_est = reg_model.named_steps[list(reg_model.named_steps.keys())[-1]]
-        if hasattr(last_est, 'model') and isinstance(last_est.model, xgb.Booster):
-            shap_reg = last_est.model
-        else:
-            shap_reg = last_est
-    else:
-        shap_reg = reg_model
-
-    # ---------- Compute SHAP for classification (predicted class) ----------
-    explainer_clf = shap.TreeExplainer(shap_clf)
-    shap_values_clf = explainer_clf.shap_values(X_snap)
-
-    # Predict classes using the original model (handles numpy arrays)
-    pred_classes = clf_model.predict(X_snap)
-    shap_class_vals = []
-    for i, cls in enumerate(pred_classes):
-        if isinstance(shap_values_clf, list):
-            shap_class_vals.append(shap_values_clf[cls][i])
-        elif hasattr(shap_values_clf, 'ndim') and shap_values_clf.ndim == 3:
-            shap_class_vals.append(shap_values_clf[i, :, cls])
-        else:
-            shap_class_vals.append(shap_values_clf[i])
-    shap_class_vals = np.array(shap_class_vals)  # (n_snapshots, n_features)
-
-    # ---------- Compute SHAP for regression ----------
-    explainer_reg = shap.TreeExplainer(shap_reg)
-    shap_values_reg = explainer_reg.shap_values(X_snap)
-
-    # ---------- Plot SHAP timeline (top 5 features) ----------
-    mean_abs_shap = np.mean(np.abs(shap_class_vals), axis=0)
-    top_n = 5
-    top_idx = np.argsort(mean_abs_shap)[-top_n:]
-    top_features = [feature_names[i] for i in top_idx]
-
-    plt.figure(figsize=(12, 6))
-    for i in top_idx:
-        plt.plot(times, shap_class_vals[:, i], marker='o', label=feature_names[i])
-    plt.xlabel('Match minute')
-    plt.ylabel('SHAP value (contribution to predicted class)')
-    plt.title(f'SHAP Timeline for Match {match_id} (Top {top_n} features)')
-    plt.legend()
+# ===================== MAIN =====================
+def main():
+    print("Loading data...")
+    (train_pre, val_pre, test_pre), (train_snap, val_snap, test_snap) = load_original_data()
+    full_df = load_full_data()
+    full_snaps = load_full_snapshots()
+    
+    print("Full data shape:", full_df.shape)
+    print("Seasons:", sorted(full_df['season'].unique()))
+    
+    # ===================== TEMPORAL EVALUATION: PRE-MATCH CLASSIFICATION =====================
+    print("\n========== TEMPORAL WALK-FORWARD: PRE-MATCH CLASSIFICATION ==========\n")
+    clf_results = []
+    for model_name in clf_models.keys():
+        print(f"Evaluating {model_name} ...")
+        res_df = run_temporal_prematch_classification(full_df, model_name)
+        clf_results.append(res_df)
+    clf_all = pd.concat(clf_results, ignore_index=True)
+    clf_all.to_csv(os.path.join(OUTPUT_DIR, 'temporal_prematch_classification.csv'), index=False)
+    print("\nPre-match classification results (per season):")
+    print(clf_all.round(4).to_string(index=False))
+    
+    # ===================== TEMPORAL EVALUATION: PRE-MATCH REGRESSION =====================
+    print("\n========== TEMPORAL WALK-FORWARD: PRE-MATCH REGRESSION ==========\n")
+    reg_results = []
+    for model_name in reg_models.keys():
+        print(f"Evaluating {model_name} ...")
+        res_df = run_temporal_prematch_regression(full_df, model_name)
+        reg_results.append(res_df)
+    reg_all = pd.concat(reg_results, ignore_index=True)
+    reg_all.to_csv(os.path.join(OUTPUT_DIR, 'temporal_prematch_regression.csv'), index=False)
+    print("\nPre-match regression results (per season):")
+    print(reg_all.round(4).to_string(index=False))
+    
+    # ===================== TEMPORAL EVALUATION: IN-PLAY CLASSIFICATION =====================
+    print("\n========== TEMPORAL WALK-FORWARD: IN-PLAY CLASSIFICATION ==========\n")
+    inplay_clf_results = []
+    for model_name in clf_models.keys():
+        print(f"Evaluating {model_name} ...")
+        res_df = run_temporal_inplay_classification(full_snaps, full_df, model_name)
+        inplay_clf_results.append(res_df)
+    inplay_clf_all = pd.concat(inplay_clf_results, ignore_index=True)
+    inplay_clf_all.to_csv(os.path.join(OUTPUT_DIR, 'temporal_inplay_classification.csv'), index=False)
+    print("\nIn-play classification results (per season):")
+    print(inplay_clf_all.round(4).to_string(index=False))
+    
+    # ===================== TEMPORAL EVALUATION: IN-PLAY REGRESSION =====================
+    print("\n========== TEMPORAL WALK-FORWARD: IN-PLAY REGRESSION ==========\n")
+    inplay_reg_results = []
+    for model_name in reg_models.keys():
+        print(f"Evaluating {model_name} ...")
+        res_df = run_temporal_inplay_regression(full_snaps, full_df, model_name)
+        inplay_reg_results.append(res_df)
+    inplay_reg_all = pd.concat(inplay_reg_results, ignore_index=True)
+    inplay_reg_all.to_csv(os.path.join(OUTPUT_DIR, 'temporal_inplay_regression.csv'), index=False)
+    print("\nIn-play regression results (per season):")
+    print(inplay_reg_all.round(4).to_string(index=False))
+    
+    # ===================== PLOTS =====================
+    # Pre-match classification log-loss per model
+    plt.figure(figsize=(14, 7))
+    sns.lineplot(data=clf_all, x='test_season', y='log_loss', hue='model', marker='o')
+    plt.xlabel('Test Season')
+    plt.ylabel('Log-Loss')
+    plt.title('Temporal Pre-Match Classification: Log-Loss per Season')
+    plt.legend(title='Model')
     plt.grid(True)
-    plt.savefig(os.path.join(fig_dir, f'shap_timeline_{match_id}.png'))
+    plt.ylim(0, 2)
+    plt.savefig(os.path.join(FIGURES_DIR, 'temporal_prematch_classification_logloss.png'))
     plt.close()
+    
+    # Pre-match regression MAE
+    plt.figure(figsize=(14, 7))
+    sns.lineplot(data=reg_all, x='test_season', y='mae', hue='model', marker='o')
+    plt.xlabel('Test Season')
+    plt.ylabel('MAE')
+    plt.title('Temporal Pre-Match Regression: MAE per Season')
+    plt.legend(title='Model')
+    plt.grid(True)
+    plt.savefig(os.path.join(FIGURES_DIR, 'temporal_prematch_regression_mae.png'))
+    plt.close()
+    
+    # In-play classification log-loss
+    plt.figure(figsize=(14, 7))
+    sns.lineplot(data=inplay_clf_all, x='test_season', y='log_loss', hue='model', marker='o')
+    plt.xlabel('Test Season')
+    plt.ylabel('Log-Loss')
+    plt.title('Temporal In-Play Classification: Log-Loss per Season')
+    plt.legend(title='Model')
+    plt.grid(True)
+    plt.ylim(0, 2)
+    plt.savefig(os.path.join(FIGURES_DIR, 'temporal_inplay_classification_logloss.png'))
+    plt.close()
+    
+    # In-play regression MAE
+    plt.figure(figsize=(14, 7))
+    sns.lineplot(data=inplay_reg_all, x='test_season', y='mae', hue='model', marker='o')
+    plt.xlabel('Test Season')
+    plt.ylabel('MAE')
+    plt.title('Temporal In-Play Regression: MAE per Season')
+    plt.legend(title='Model')
+    plt.grid(True)
+    plt.savefig(os.path.join(FIGURES_DIR, 'temporal_inplay_regression_mae.png'))
+    plt.close()
+    
+    print("Plots saved.")
+    
+    # ===================== KERNEL SCALING (using full pre-match features) =====================
+    print("\n========== KERNEL SCALING ==========\n")
+    # Use the first fold for training data
+    folds = get_temporal_folds(full_df, min_train_seasons=3, window_size=WINDOW_SIZE)
+    if folds:
+        train_mask, _ = folds[0]
+        X_temp, y_temp = get_features_labels_prematch(full_df[train_mask])
+        subsample_sizes = [100, 500, 1000, 2000, 5000]
+        kernel_times = []
+        for n in subsample_sizes:
+            if n > len(X_temp):
+                break
+            X_sub = X_temp[:n]
+            y_sub = y_temp[:n]
+            model = KernelRidge(alpha=1.0, kernel='rbf')
+            process = psutil.Process()
+            mem_before = process.memory_info().rss / 1024**2
+            start = time.time()
+            model.fit(X_sub, y_sub)
+            end = time.time()
+            mem_after = process.memory_info().rss / 1024**2
+            kernel_times.append((end-start, mem_after - mem_before))
+            gc.collect()
+        plt.figure(figsize=(10, 6))
+        plt.plot(subsample_sizes[:len(kernel_times)], [t for t,_ in kernel_times], marker='o')
+        plt.xlabel('Training sample size')
+        plt.ylabel('Time (seconds)')
+        plt.title('Kernel Ridge scaling (O(n^2))')
+        plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling.png'))
+        plt.close()
+        print("Kernel scaling plot saved.")
+    
+    # ===================== SHAP ANALYSIS ON LAST FOLD =====================
+    print("\n========== SHAP ANALYSIS ON LAST FOLD ==========\n")
+    if folds:
+        train_mask, test_mask = folds[-1]
+        X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+        X_test, y_test = get_features_labels_prematch(full_df[test_mask])
+        feature_cols = [c for c in full_df.columns if c not in [
+            'match_id', 'match_date', 'home_team', 'away_team',
+            'label_goal_diff', 'label_result', 'result', 'season',
+            'competition_id', 'label'
+        ]]
+        shap_model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1,
+                                   max_depth=5, eval_metric='mlogloss', verbosity=0)
+        shap_model.fit(X_train, y_train)
+        explainer = shap.TreeExplainer(shap_model)
+        shap_values = explainer.shap_values(X_test[:100])
+        shap.summary_plot(shap_values, X_test[:100], feature_names=feature_cols, show=False)
+        plt.savefig(os.path.join(FIGURES_DIR, 'temporal_shap_summary.png'))
+        plt.close()
+        pred_class = np.argmax(shap_model.predict_proba(X_test[:1])[0])
+        # Robust extraction for multi-class SHAP
+        if isinstance(shap_values, list):
+            class_shap = shap_values[pred_class][0]
+            base = explainer.expected_value[pred_class]
+        else:
+            class_shap = shap_values[0, :, pred_class]
+            base = explainer.expected_value[pred_class] if isinstance(explainer.expected_value, list) else explainer.expected_value
+        explanation = shap.Explanation(
+            values=class_shap,
+            base_values=base,
+            data=X_test[0],
+            feature_names=feature_cols
+        )
+        shap.plots.waterfall(explanation, show=False)
+        plt.savefig(os.path.join(FIGURES_DIR, 'temporal_shap_waterfall.png'))
+        plt.close()
+    
+    # ===================== RESAMPLING COMPARISON ON LAST FOLD =====================
+    print("\n========== RESAMPLING COMPARISON ON LAST FOLD ==========\n")
+    if folds:
+        train_mask, test_mask = folds[-1]
+        X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+        X_test, y_test = get_features_labels_prematch(full_df[test_mask])
+        from imblearn.over_sampling import SMOTE, BorderlineSMOTE, ADASYN
+        resamplers = {
+            'None': None,
+            'PF-SMOTE': PF_SMOTE(random_state=SEED),
+            'SMOTE': SMOTE(random_state=SEED),
+            'BorderlineSMOTE': BorderlineSMOTE(random_state=SEED),
+            'ADASYN': ADASYN(random_state=SEED),
+        }
+        resample_results = []
+        base_model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1)
+        for name, resampler in resamplers.items():
+            steps = [('scaler', StandardScaler())]
+            if resampler is not None:
+                steps.append(('resampler', resampler))
+            steps.append(('clf', base_model))
+            pipe = ImbPipeline(steps)
+            pipe.fit(X_train, y_train)
+            probs = pipe.predict_proba(X_test)
+            ll = log_loss(y_test, probs)
+            rps = np.mean([np.sum((np.cumsum(probs[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+            acc = accuracy_score(y_test, np.argmax(probs, axis=1))
+            resample_results.append({'resampler': name, 'log_loss': ll, 'rps': rps, 'accuracy': acc})
+        resample_df = pd.DataFrame(resample_results)
+        resample_df.to_csv(os.path.join(OUTPUT_DIR, 'resampling_comparison.csv'), index=False)
+        print(resample_df.round(4).to_string(index=False))
+    
+    # ===================== EXPECTED POINTS PER TEAM (TEMPORAL) =====================
+    print("\n========== EXPECTED POINTS PER TEAM (ALL SEASONS) ==========\n")
+    teams = pd.unique(full_df[['home_team','away_team']].values.ravel())
+    ep_rows = []
+    seasons = sorted(full_df['season'].unique())
+    for team in teams:
+        team_df = full_df[(full_df['home_team']==team) | (full_df['away_team']==team)].copy()
+        total_pred = 0; total_actual = 0; n_seasons = 0
+        for season in seasons:
+            train_mask = full_df['season'] < season
+            if train_mask.sum() < MIN_TRAIN_MATCHES:
+                continue
+            test_mask = (team_df['season']==season)
+            if test_mask.sum() < MIN_TEST_MATCHES:
+                continue
+            X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+            model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1)
+            model.fit(X_train, y_train)
+            X_test, y_test = get_features_labels_prematch(team_df[test_mask])
+            probs = model.predict_proba(X_test)
+            home_flags = (team_df[test_mask]['home_team']==team).values
+            exp_points = np.zeros(len(y_test))
+            for i in range(len(y_test)):
+                if home_flags[i]:
+                    exp_points[i] = 3*probs[i,0] + 1*probs[i,1]
+                else:
+                    exp_points[i] = 3*probs[i,2] + 1*probs[i,1]
+            actual_points = np.zeros(len(y_test))
+            for i, row in enumerate(team_df[test_mask].itertuples()):
+                if row.home_team == team:
+                    if row.result == 'H': actual_points[i] = 3
+                    elif row.result == 'D': actual_points[i] = 1
+                else:
+                    if row.result == 'A': actual_points[i] = 3
+                    elif row.result == 'D': actual_points[i] = 1
+            total_pred += exp_points.sum(); total_actual += actual_points.sum(); n_seasons += 1
+        if n_seasons > 0:
+            ep_rows.append({'team': team, 'n_seasons': n_seasons,
+                            'predicted_total_points': total_pred, 'actual_total_points': total_actual,
+                            'difference': total_pred - total_actual})
+    ep_df = pd.DataFrame(ep_rows)
+    if not ep_df.empty:
+        ep_df = ep_df.sort_values('difference', ascending=False).head(10)
+        ep_df.to_csv(os.path.join(OUTPUT_DIR, 'team_expected_points.csv'), index=False)
+        plt.figure(figsize=(10,6))
+        sns.barplot(x='difference', y='team', data=ep_df)
+        plt.xlabel('Difference (Predicted - Actual Points)'); plt.ylabel('Team')
+        plt.title('Expected Points Difference by Team (Top 10)')
+        plt.savefig(os.path.join(FIGURES_DIR, 'expected_points_difference.png'))
+        plt.close()
+        print("Expected points saved.")
+        print(ep_df.round(2).to_string(index=False))
+    
+    # ===================== HIGH-RISK BRIER (TEMPORAL) =====================
+    print("\n========== HIGH-RISK BRIER (ALL SEASONS) ==========\n")
+    hr_rows = []
+    for season in seasons:
+        train_mask = full_df['season'] < season
+        test_mask = full_df['season'] == season
+        if train_mask.sum() < MIN_TRAIN_MATCHES or test_mask.sum() < MIN_TEST_MATCHES:
+            continue
+        X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+        X_test, y_test = get_features_labels_prematch(full_df[test_mask])
+        model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1)
+        model.fit(X_train, y_train)
+        probs = model.predict_proba(X_test)
+        true_probs = probs[np.arange(len(y_test)), y_test]
+        risk_mask = true_probs < HIGH_RISK_THRESHOLD
+        if risk_mask.sum() > 0:
+            brier = np.mean([brier_score_loss((y_test[risk_mask]==c).astype(int), probs[risk_mask, c]) for c in range(3)])
+        else:
+            brier = np.nan
+        hr_rows.append({'season': season, 'high_risk_count': risk_mask.sum(), 'brier_high_risk': brier})
+    hr_df = pd.DataFrame(hr_rows)
+    hr_df.to_csv(os.path.join(OUTPUT_DIR, 'high_risk_brier.csv'), index=False)
+    plt.figure(figsize=(10,6))
+    plt.plot(hr_df['season'], hr_df['brier_high_risk'], marker='o')
+    plt.xlabel('Season'); plt.ylabel('Brier (High-risk)')
+    plt.title('High-Risk Brier over Seasons')
+    plt.grid(True); plt.ylim(0,1)
+    plt.savefig(os.path.join(FIGURES_DIR, 'high_risk_brier.png'))
+    plt.close()
+    print("High-risk Brier saved.")
+    print(hr_df.round(4).to_string(index=False))
+    
+    # ===================== TRANSFER LEARNING (COMBINED BASE -> FINE-TUNE) =====================
+    print("\n========== TRANSFER LEARNING ==========\n")
+    # Train base on all data (first 80%), fine-tune on each league's last 20%
+    combined = full_df.sort_values('match_date')
+    n_combined = len(combined)
+    combined_train = combined.iloc[:int(n_combined*0.8)]
+    X_base, y_base = get_features_labels_prematch(combined_train)
+    base_model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1)
+    base_model.fit(X_base, y_base)
+    transfer_results = []
+    for comp_id, league_name in [(11,'La Liga'), (2,'Premier League')]:
+        league_df = full_df[full_df['competition_id']==comp_id].copy()
+        if len(league_df) < 100:
+            continue
+        league_df = league_df.sort_values('match_date')
+        n = len(league_df)
+        league_train = league_df.iloc[:int(n*0.8)]
+        league_test = league_df.iloc[int(n*0.8):]
+        if len(league_train) < MIN_TRAIN_MATCHES or len(league_test) < MIN_TEST_MATCHES:
+            continue
+        X_ft, y_ft = get_features_labels_prematch(league_train)
+        fine_model = XGBClassifier(random_state=SEED, n_estimators=50, learning_rate=0.05, max_depth=5)
+        fine_model.fit(X_ft, y_ft, xgb_model=base_model.get_booster())
+        X_test, y_test = get_features_labels_prematch(league_test)
+        probs_fine = fine_model.predict_proba(X_test)
+        metrics_fine = evaluate_classifier_temporal(fine_model, X_ft, y_ft, X_test, y_test, calibrate=False)
+        transfer_results.append({'league': league_name, 'method': 'Transfer (base combined + fine-tune)', **metrics_fine})
+        probs_base = base_model.predict_proba(X_test)
+        metrics_base = evaluate_classifier_temporal(base_model, X_base, y_base, X_test, y_test, calibrate=False)
+        transfer_results.append({'league': league_name, 'method': 'Base combined (no fine-tune)', **metrics_base})
+    transfer_df = pd.DataFrame(transfer_results)
+    transfer_df.to_csv(os.path.join(OUTPUT_DIR, 'transfer_learning.csv'), index=False)
+    plt.figure(figsize=(10,6))
+    sns.barplot(x='league', y='accuracy', hue='method', data=transfer_df)
+    plt.savefig(os.path.join(FIGURES_DIR, 'transfer_learning_accuracy.png'))
+    plt.close()
+    print("Transfer learning results saved.")
+    print(transfer_df.round(4).to_string(index=False))
+    
+    # ===================== SEASONAL ENSEMBLE (AVERAGE OVER WINDOWS) =====================
+    print("\n========== SEASONAL ENSEMBLE ==========\n")
+    ensemble_results = []
+    for season in seasons:
+        prior = [s for s in seasons if s < season]
+        if len(prior) < 3:
+            continue
+        models = []
+        for w in ENSEMBLE_WINDOWS:
+            if w is None:
+                train_mask = full_df['season'] < season
+            else:
+                if len(prior) < w:
+                    continue
+                train_seasons = prior[-w:]
+                train_mask = full_df['season'].isin(train_seasons)
+            if train_mask.sum() < MIN_TRAIN_MATCHES:
+                continue
+            X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+            model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1)
+            model.fit(X_train, y_train)
+            models.append(model)
+        if not models:
+            continue
+        test_mask = full_df['season'] == season
+        if test_mask.sum() < MIN_TEST_MATCHES:
+            continue
+        X_test, y_test = get_features_labels_prematch(full_df[test_mask])
+        prob_sum = None
+        for model in models:
+            probs = model.predict_proba(X_test)
+            if prob_sum is None:
+                prob_sum = probs
+            else:
+                prob_sum += probs
+        probs = prob_sum / len(models)
+        # Compute metrics manually (do NOT call evaluate_classifier_temporal with None)
+        ll = log_loss(y_test, probs) if len(set(y_test)) > 1 else np.nan
+        acc = accuracy_score(y_test, np.argmax(probs, axis=1))
+        rps = np.mean([np.sum((np.cumsum(probs[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+        brier = np.mean([brier_score_loss((y_test==c).astype(int), probs[:,c]) for c in range(3)])
+        ensemble_results.append({'season': season, 'window': 'ensemble', 'log_loss': ll, 'accuracy': acc, 'rps': rps, 'brier': brier})
+    ensemble_df = pd.DataFrame(ensemble_results)
+    ensemble_df.to_csv(os.path.join(OUTPUT_DIR, 'seasonal_metrics_ensemble.csv'), index=False)
+    all_df = pd.DataFrame()
+    window_df = pd.DataFrame()
+    for season in seasons:
+        prior = [s for s in seasons if s < season]
+        if not prior:
+            continue
+        # all past
+        train_mask = full_df['season'] < season
+        if train_mask.sum() >= MIN_TRAIN_MATCHES:
+            X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+            X_test, y_test = get_features_labels_prematch(full_df[full_df['season']==season])
+            if len(y_test) >= MIN_TEST_MATCHES:
+                model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1)
+                model.fit(X_train, y_train)
+                probs = model.predict_proba(X_test)
+                ll = log_loss(y_test, probs)
+                acc = accuracy_score(y_test, np.argmax(probs, axis=1))
+                rps = np.mean([np.sum((np.cumsum(probs[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+                brier = np.mean([brier_score_loss((y_test==c).astype(int), probs[:,c]) for c in range(3)])
+                all_df = pd.concat([all_df, pd.DataFrame([{'season':season, 'window':'all', 'log_loss':ll, 'accuracy':acc, 'rps':rps, 'brier':brier}])], ignore_index=True)
+        # window 5
+        if len(prior) >= 5:
+            train_seasons = prior[-5:]
+            train_mask = full_df['season'].isin(train_seasons)
+            if train_mask.sum() >= MIN_TRAIN_MATCHES:
+                X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+                X_test, y_test = get_features_labels_prematch(full_df[full_df['season']==season])
+                if len(y_test) >= MIN_TEST_MATCHES:
+                    model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1)
+                    model.fit(X_train, y_train)
+                    probs = model.predict_proba(X_test)
+                    ll = log_loss(y_test, probs)
+                    acc = accuracy_score(y_test, np.argmax(probs, axis=1))
+                    rps = np.mean([np.sum((np.cumsum(probs[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+                    brier = np.mean([brier_score_loss((y_test==c).astype(int), probs[:,c]) for c in range(3)])
+                    window_df = pd.concat([window_df, pd.DataFrame([{'season':season, 'window':'window5', 'log_loss':ll, 'accuracy':acc, 'rps':rps, 'brier':brier}])], ignore_index=True)
+    all_df.to_csv(os.path.join(OUTPUT_DIR, 'seasonal_metrics_all.csv'), index=False)
+    window_df.to_csv(os.path.join(OUTPUT_DIR, 'seasonal_metrics_window.csv'), index=False)
+    # Plot comparison
+    plt.figure(figsize=(12,6))
+    if not all_df.empty:
+        all_df = all_df.sort_values('season')
+        plt.plot(all_df['season'], all_df['log_loss'], marker='o', linestyle='--', label='All past')
+    if not window_df.empty:
+        window_df = window_df.sort_values('season')
+        plt.plot(window_df['season'], window_df['log_loss'], marker='s', linestyle=':', label='Window=5')
+    if not ensemble_df.empty:
+        ensemble_df = ensemble_df.sort_values('season')
+        plt.plot(ensemble_df['season'], ensemble_df['log_loss'], marker='^', label='Ensemble')
+    plt.xlabel('Season'); plt.ylabel('Log-Loss')
+    plt.title('Seasonal Metrics: All vs Window vs Ensemble')
+    plt.legend(); plt.grid(True); plt.ylim(0,2)
+    plt.savefig(os.path.join(FIGURES_DIR, 'seasonal_comparison_logloss.png'))
+    plt.close()
+    print("Seasonal ensemble results saved.")
+    print(ensemble_df.round(4).to_string(index=False))
+    
+    # ===================== SAVE IN-PLAY MODELS FOR API (LAST FOLD) =====================
+    print("\n========== SAVING IN-PLAY MODELS FOR API ==========\n")
+    if folds:
+        train_mask, test_mask = folds[-1]
+        train_matches = full_df[train_mask]['match_id'].values
+        test_matches = full_df[test_mask]['match_id'].values
+        train_snaps = full_snaps[full_snaps['match_id'].isin(train_matches)]
+        test_snaps = full_snaps[full_snaps['match_id'].isin(test_matches)]
+        if len(train_snaps) > 0 and len(test_snaps) > 0:
+            # In-play feature columns (exactly the ones used during training)
+            snap_feature_cols = [c for c in train_snaps.columns if c not in [
+                'match_id', 'snapshot_time', 'final_goal_diff', 'final_result',
+                'match_date', 'season', 'label_cls'
+            ]]
+            X_train_snap = train_snaps[snap_feature_cols].values
+            y_train_snap_cls = train_snaps['label_cls'].values
+            y_train_snap_reg = train_snaps['final_goal_diff'].values
 
-    # ---------- Waterfall plot at the middle snapshot ----------
-    mid_snapshot = len(times) // 2
-    snapshot_idx = mid_snapshot
-    pred_class = pred_classes[snapshot_idx]
+            # Classification pipeline with ADASYN + scaler
+            clf_pipe = create_clf_pipeline(
+                XGBClassifier(random_state=SEED, eval_metric='mlogloss'),
+                resampler='adasyn', scaler=True
+            )
+            clf_pipe.fit(X_train_snap, y_train_snap_cls)
 
-    if isinstance(shap_values_clf, list):
-        class_shap = shap_values_clf[pred_class][snapshot_idx]
-        base = explainer_clf.expected_value[pred_class]
-    elif hasattr(shap_values_clf, 'ndim') and shap_values_clf.ndim == 3:
-        class_shap = shap_values_clf[snapshot_idx, :, pred_class]
-        base = explainer_clf.expected_value[pred_class]
+            # Regression pipeline with scaler
+            reg_pipe = create_reg_pipeline(
+                XGBRegressor(random_state=SEED), scaler=True
+            )
+            reg_pipe.fit(X_train_snap, y_train_snap_reg)
+
+            # Save models
+            import joblib
+            joblib.dump(clf_pipe, os.path.join(OUTPUT_DIR, 'best_inplay_clf.pkl'))
+            joblib.dump(reg_pipe, os.path.join(OUTPUT_DIR, 'best_inplay_reg.pkl'))
+
+            # Save test snapshots for the app
+            test_snaps.to_csv(os.path.join(OUTPUT_DIR, 'test_snapshots_for_app.csv'), index=False)
+            full_df[test_mask].to_csv(os.path.join(OUTPUT_DIR, 'test_prematch_for_app.csv'), index=False)
+
+            print("In-play models and test data saved.")
+        else:
+            print("Not enough in-play data for last fold.")
     else:
-        class_shap = shap_values_clf[snapshot_idx]
-        base = explainer_clf.expected_value
+        print("No folds available.")
+    
+        # ===================== WORST PREDICTIONS ANALYSIS (LAST FOLD, PRE-MATCH) =====================
+    print("\n========== WORST PREDICTIONS ANALYSIS (LAST FOLD, PRE-MATCH) ==========\n")
+    if folds:
+        train_mask, test_mask = folds[-1]
+        X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+        X_test, y_test = get_features_labels_prematch(full_df[test_mask])
+        feature_cols = [c for c in full_df.columns if c not in [
+            'match_id', 'match_date', 'home_team', 'away_team',
+            'label_goal_diff', 'label_result', 'result', 'season',
+            'competition_id', 'label'
+        ]]
+        worst_model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1,
+                                     max_depth=5, eval_metric='mlogloss', verbosity=0)
+        worst_model.fit(X_train, y_train)
+        probs = worst_model.predict_proba(X_test)
+        per_sample_ll = -np.log(probs[np.arange(len(y_test)), y_test])
+        worst_idx = np.argsort(per_sample_ll)[-10:]
+        explainer_worst = shap.TreeExplainer(worst_model)
+        shap_values_worst = explainer_worst.shap_values(X_test[worst_idx])
+        for i, idx in enumerate(worst_idx):
+            pred_class = np.argmax(probs[idx])
+            true_label = y_test[idx]
+            if isinstance(shap_values_worst, list):
+                class_shap = shap_values_worst[pred_class][i]
+                base = explainer_worst.expected_value[pred_class]
+            else:
+                class_shap = shap_values_worst[i, :, pred_class]
+                base = explainer_worst.expected_value[pred_class] if isinstance(explainer_worst.expected_value, list) else explainer_worst.expected_value
+            explanation = shap.Explanation(values=class_shap, base_values=base,
+                                           data=X_test[idx], feature_names=feature_cols)
+            plt.figure(figsize=(8,5))
+            shap.plots.waterfall(explanation, show=False)
+            plt.title(f"Worst Sample {idx} (true={true_label}, pred={pred_class}, LL={per_sample_ll[idx]:.4f})")
+            plt.savefig(os.path.join(FIGURES_DIR, f'worst_{i+1}_prematch.png'))
+            plt.close()
+        print("Worst predictions analysis saved.")
 
-    explanation = shap.Explanation(
-        values=class_shap,
-        base_values=base,
-        data=X_snap[snapshot_idx],
-        feature_names=feature_names
-    )
-    shap.plots.waterfall(explanation, show=False)
-    plt.title(f'Match {match_id} at minute {times[snapshot_idx]} – Predicted class {pred_class}')
-    plt.savefig(os.path.join(fig_dir, f'shap_waterfall_{match_id}_min{int(times[snapshot_idx])}.png'))
-    plt.close()
+    # ===================== SHAP TIMELINE (LAST FOLD, ONE MATCH) =====================
+    print("\n========== SHAP TIMELINE (LAST FOLD, ONE MATCH) ==========\n")
+    if folds:
+        train_mask, test_mask = folds[-1]
+        test_matches = full_df[test_mask]['match_id'].values
+        if len(test_matches) > 0:
+            chosen_match = test_matches[0]
+            # Load snapshots for this match from full_snaps
+            match_snaps = full_snaps[full_snaps['match_id'] == chosen_match].sort_values('snapshot_time')
+            if len(match_snaps) >= 2:
+                snap_feature_cols = [c for c in match_snaps.columns if c not in [
+                    'match_id', 'snapshot_time', 'final_goal_diff', 'final_result',
+                    'match_date', 'season', 'label_cls'
+                ]]
+                X_snap = match_snaps[snap_feature_cols].values
+                y_snap = match_snaps['label_cls'].values
+                # Train an in-play model on all training snapshots (before last fold)
+                train_matches = full_df[train_mask]['match_id'].values
+                train_snaps = full_snaps[full_snaps['match_id'].isin(train_matches)]
+                if len(train_snaps) > 0:
+                    X_train_snap = train_snaps[snap_feature_cols].values
+                    y_train_snap = train_snaps['label_cls'].values
+                    timeline_model = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1,
+                                                   max_depth=5, eval_metric='mlogloss', verbosity=0)
+                    timeline_model.fit(X_train_snap, y_train_snap)
+                    explainer_timeline = shap.TreeExplainer(timeline_model)
+                    shap_values_timeline = explainer_timeline.shap_values(X_snap)
+                    # Get predicted class for each snapshot
+                    pred_classes = timeline_model.predict(X_snap)
+                    # Extract SHAP for predicted class
+                    shap_class_vals = []
+                    for i, cls in enumerate(pred_classes):
+                        if isinstance(shap_values_timeline, list):
+                            shap_class_vals.append(shap_values_timeline[cls][i])
+                        elif hasattr(shap_values_timeline, 'ndim') and shap_values_timeline.ndim == 3:
+                            shap_class_vals.append(shap_values_timeline[i, :, cls])
+                        else:
+                            shap_class_vals.append(shap_values_timeline[i])
+                    shap_class_vals = np.array(shap_class_vals)
+                    # Plot top 5 features over time
+                    mean_abs_shap = np.mean(np.abs(shap_class_vals), axis=0)
+                    top_idx = np.argsort(mean_abs_shap)[-5:]
+                    plt.figure(figsize=(12,6))
+                    for idx in top_idx:
+                        plt.plot(match_snaps['snapshot_time'], shap_class_vals[:, idx], marker='o', label=snap_feature_cols[idx])
+                    plt.xlabel('Match minute')
+                    plt.ylabel('SHAP value (contribution to predicted class)')
+                    plt.title(f'SHAP Timeline for Match {chosen_match}')
+                    plt.legend()
+                    plt.grid(True)
+                    plt.savefig(os.path.join(FIGURES_DIR, 'temporal_shap_timeline.png'))
+                    plt.close()
+                    print("SHAP timeline saved.")
 
-    print(f"SHAP timeline for match {match_id} saved.")
+    # ===================== RELIABILITY DIAGRAMS WITH CALIBRATION COMPARISON =====================
+    print("\n========== RELIABILITY DIAGRAMS WITH CALIBRATION COMPARISON ==========\n")
+    if folds:
+        train_mask, test_mask = folds[-1]
+        X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+        X_test, y_test = get_features_labels_prematch(full_df[test_mask])
+        feature_cols = [c for c in full_df.columns if c not in [
+            'match_id', 'match_date', 'home_team', 'away_team',
+            'label_goal_diff', 'label_result', 'result', 'season',
+            'competition_id', 'label'
+        ]]
+        
+        # Test calibration methods
+        methods = ['none', 'platt', 'isotonic']
+        cal_results = []
+        for method in methods:
+            model_tmp = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1,
+                                      max_depth=5, eval_metric='mlogloss', verbosity=0)
+            metrics = evaluate_classifier_temporal(model_tmp, X_train, y_train, X_test, y_test,
+                                                   calibrate=True, calib_method=method)
+            metrics['calibration'] = method
+            cal_results.append(metrics)
+        cal_df = pd.DataFrame(cal_results)
+        cal_df.to_csv(os.path.join(OUTPUT_DIR, 'calibration_comparison.csv'), index=False)
+        print("Calibration comparison:")
+        print(cal_df.round(4).to_string(index=False))
+        
+        # Choose best method based on Brier (or log-loss)
+        best_method = cal_df.loc[cal_df['brier'].idxmin(), 'calibration']
+        if best_method == 'none':
+            best_method = 'platt'  # fallback
+        
+        # Use best method to plot reliability
+        model_tmp = XGBClassifier(random_state=SEED, n_estimators=100, learning_rate=0.1,
+                                  max_depth=5, eval_metric='mlogloss', verbosity=0)
+        # Inner split
+        n_train = len(X_train)
+        cal_size = max(10, int(n_train * 0.2))
+        X_inner_train = X_train[:n_train-cal_size]
+        y_inner_train = y_train[:n_train-cal_size]
+        X_cal = X_train[n_train-cal_size:]
+        y_cal = y_train[n_train-cal_size:]
+        model_tmp.fit(X_inner_train, y_inner_train)
+        # Compute probabilities on calibration set (for isotonic fitting)
+        probs_cal = model_tmp.predict_proba(X_cal)
+        # Get test probabilities (raw)
+        probs_uncal_test = model_tmp.predict_proba(X_test)
+        
+        if best_method == 'platt':
+            calibrator = CalibratedClassifierCV(estimator=model_tmp, method='sigmoid', cv='prefit')
+            calibrator.fit(X_cal, y_cal)
+            probs = calibrator.predict_proba(X_test)
+        elif best_method == 'isotonic':
+            n_classes = probs_uncal_test.shape[1]
+            probs = np.zeros_like(probs_uncal_test)
+            for c in range(n_classes):
+                iso = IsotonicRegression(out_of_bounds='clip')
+                iso.fit(probs_cal[:, c], (y_cal == c).astype(int))
+                probs[:, c] = iso.predict(probs_uncal_test[:, c])
+            probs = probs / probs.sum(axis=1, keepdims=True)
+        else:
+            probs = probs_uncal_test
+        
+        # Plot reliability
+        fig, axes = plt.subplots(1, 3, figsize=(12, 4))
+        for c in range(3):
+            from sklearn.calibration import calibration_curve
+            frac_pos, mean_pred = calibration_curve((y_test == c).astype(int), probs[:, c], n_bins=10)
+            axes[c].plot(mean_pred, frac_pos, 's-', label='Model')
+            axes[c].plot([0,1], [0,1], 'k--', label='Perfect')
+            axes[c].set_xlabel('Mean predicted probability')
+            axes[c].set_ylabel('Fraction of positives')
+            axes[c].set_title(f'Class {c} (Calib: {best_method})')
+            axes[c].legend()
+        plt.suptitle(f'Reliability Diagram – Pre-match Model (Last Fold, {best_method} calibration)')
+        plt.savefig(os.path.join(FIGURES_DIR, 'temporal_reliability_prematch_' + best_method + '.png'))
+        plt.close()
+        print(f"Reliability diagram saved with {best_method} calibration.")
 
-# Example: pick a match from the test set (i.e. first one)
-example_match_id = test_pre['match_id'].iloc[0]
-shap_timeline_for_match(example_match_id,
-                        best_inplay_clf,
-                        best_inplay_reg,
-                        test_snap,       # full test snapshots DataFrame
-                        y_snap_test_cls,
-                        y_snap_test_reg,
-                        snap_feat_cols,
-                        FIGURES_DIR)
+    # ===================== KERNEL SCALING (USING IN-PLAY DATA) =====================
+    print("\n========== KERNEL SCALING (IN-PLAY DATA) ==========\n")
+    if not full_snaps.empty:
+        snap_feat_cols = [c for c in full_snaps.columns if c not in [
+            'match_id', 'snapshot_time', 'final_goal_diff', 'final_result',
+            'match_date', 'season', 'label_cls'
+        ]]
+        X_snap_temp = full_snaps[snap_feat_cols].values
+        y_snap_temp = full_snaps['label_cls'].values
+        max_n = len(X_snap_temp)
+        
+        subsample_sizes = [100, 500, 1000, 2000, 5000, 10000]
+        subsample_sizes = [s for s in subsample_sizes if s < max_n]
+        if len(subsample_sizes) < 3:
+            subsample_sizes = [100, 500, 1000, 2000, 4000]
+            subsample_sizes = [s for s in subsample_sizes if s < max_n]
+        
+        if len(subsample_sizes) >= 2:
+            kernel_times = []
+            approx_times = []
+            for n in subsample_sizes:
+                X_sub = X_snap_temp[:n]
+                y_sub = y_snap_temp[:n]
+                
+                # Exact KernelRidge
+                model = KernelRidge(alpha=1.0, kernel='rbf')
+                start = time.time()
+                model.fit(X_sub, y_sub)
+                end = time.time()
+                kernel_times.append((end-start, 0))
+                
+                # Approximate (Nystroem + Ridge)
+                pipe = Pipeline([
+                    ('scaler', StandardScaler()),
+                    ('kernel_approx', Nystroem(kernel='rbf', n_components=100, random_state=SEED)),
+                    ('reg', Ridge(alpha=1.0))
+                ])
+                start = time.time()
+                pipe.fit(X_sub, y_sub)
+                end = time.time()
+                approx_times.append((end-start, 0))
+                gc.collect()
+            
+            # Plot
+            plt.figure(figsize=(12, 7))
+            plt.plot(subsample_sizes, [t for t,_ in kernel_times], marker='o', label='Exact KernelRidge')
+            plt.plot(subsample_sizes, [t for t,_ in approx_times], marker='s', label='Approx (Nystroem+Ridge)')
+            plt.xlabel('Training sample size')
+            plt.ylabel('Time (seconds)')
+            plt.title('Kernel Scaling: Exact vs Approximate (In-Play Data)')
+            plt.legend()
+            plt.grid(True)
+            plt.savefig(os.path.join(FIGURES_DIR, 'kernel_scaling_comparison_inplay.png'))
+            plt.close()
+            print("Kernel scaling plot (in-play) saved.")
+        else:
+            print("Not enough data for kernel scaling.")
+    else:
+        print("No in-play data available for kernel scaling.")
 
-# ======================================================================
-# SAVE BEST MODELS AND RELATED DATA
-# ======================================================================
-import joblib
+        # ===================== MULTI-STEP ROLLING EVALUATION (1, 2, 3 SEASONS AHEAD) =====================
+    print("\n========== MULTI-STEP ROLLING EVALUATION (1,2,3 SEASONS AHEAD) ==========\n")
+    # For each possible cutoff season, train on all previous seasons, then test on cutoff+1, cutoff+2, cutoff+3
+    multi_results = []
+    seasons = sorted(full_df['season'].unique())
+    # Find minimum training season
+    min_train_season = None
+    for s in seasons:
+        if (full_df['season'] < s).sum() >= MIN_TRAIN_MATCHES:
+            min_train_season = s
+            break
+    if min_train_season is not None:
+        for cutoff_season in seasons:
+            if cutoff_season <= min_train_season:
+                continue
+            train_mask = full_df['season'] < cutoff_season
+            if train_mask.sum() < MIN_TRAIN_MATCHES:
+                continue
+            X_train, y_train = get_features_labels_prematch(full_df[train_mask])
+            for horizon in [1, 2, 3]:
+                test_season = cutoff_season + horizon - 1
+                if test_season not in seasons:
+                    continue
+                test_mask = full_df['season'] == test_season
+                if test_mask.sum() < MIN_TEST_MATCHES:
+                    continue
+                X_test, y_test = get_features_labels_prematch(full_df[test_mask])
+                # Train best model (XGBoost with ADASYN)
+                model = create_clf_pipeline(XGBClassifier(random_state=SEED, eval_metric='mlogloss'),
+                                             resampler='adasyn', scaler=True)
+                model.fit(X_train, y_train)
+                probs = model.predict_proba(X_test)
+                # Compute metrics
+                ll = log_loss(y_test, probs)
+                acc = accuracy_score(y_test, np.argmax(probs, axis=1))
+                rps = np.mean([np.sum((np.cumsum(probs[i,:])[:-1] - np.where(np.arange(3) < y_test[i], 1, 0)[:-1])**2) for i in range(len(y_test))])
+                brier = np.mean([brier_score_loss((y_test==c).astype(int), probs[:,c]) for c in range(3)])
+                multi_results.append({
+                    'train_up_to': cutoff_season-1,
+                    'test_season': test_season,
+                    'horizon': horizon,
+                    'log_loss': ll,
+                    'accuracy': acc,
+                    'rps': rps,
+                    'brier': brier
+                })
+        multi_df = pd.DataFrame(multi_results)
+        multi_df.to_csv(os.path.join(OUTPUT_DIR, 'multi_step_rolling.csv'), index=False)
+        # Plot
+        plt.figure(figsize=(12,6))
+        for h in [1,2,3]:
+            data = multi_df[multi_df['horizon']==h]
+            plt.plot(data['test_season'], data['log_loss'], marker='o', label=f'Horizon {h}')
+        plt.xlabel('Test Season')
+        plt.ylabel('Log-Loss')
+        plt.title('Multi-Step Rolling: Log-Loss (if model not updated)')
+        plt.legend()
+        plt.grid(True)
+        plt.ylim(0, 2)
+        plt.savefig(os.path.join(FIGURES_DIR, 'multi_step_rolling_logloss.png'))
+        plt.close()
+        print("Multi-step rolling results saved.")
+        print(multi_df.round(4).to_string(index=False))
 
-# Save the best in-play models
-joblib.dump(best_inplay_clf, os.path.join(OUTPUT_DIR, 'best_inplay_clf.pkl'))
-joblib.dump(best_inplay_reg, os.path.join(OUTPUT_DIR, 'best_inplay_reg.pkl'))
-
-# Save feature names and other metadata (for app.py and app_2.py to use)
-metadata = {
-    'pre_feat_cols': pre_feat_cols,
-    'snap_feat_cols': snap_feat_cols,
-    'test_snap': test_snap,      # full test snapshots DataFrame
-    'test_pre': test_pre,        # full test pre-match DataFrame
-    'y_snap_test_cls': y_snap_test_cls,
-    'y_snap_test_reg': y_snap_test_reg,
-}
-test_snap.to_csv(os.path.join(OUTPUT_DIR, 'test_snapshots_for_app.csv'), index=False)
-test_pre.to_csv(os.path.join(OUTPUT_DIR, 'test_prematch_for_app.csv'), index=False)
-# Save y arrays as numpy
-np.save(os.path.join(OUTPUT_DIR, 'y_snap_test_cls.npy'), y_snap_test_cls)
-np.save(os.path.join(OUTPUT_DIR, 'y_snap_test_reg.npy'), y_snap_test_reg)
-
-print("Models and data saved.")
+    # Final message
+    print("\nALL DONE!")
+    
+if __name__ == '__main__':
+    main()
