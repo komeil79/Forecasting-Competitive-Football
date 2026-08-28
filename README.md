@@ -3,7 +3,8 @@
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-A complete machine learning pipeline that predicts football match outcomes and goal margins—both before kick-off and live during the game—using StatsBomb event data. The project covers data integration, feature engineering, model training (including custom implementations of two research papers), calibration, interpretability (SHAP), and a bonus real-time prediction service.
+A complete machine learning pipeline that predicts football match outcomes and goal margins—both before kick-off and live during the game—using StatsBomb event data.
+The project covers data integration, feature engineering, model training (including custom implementations of two research papers), calibration, interpretability (SHAP), and a bonus real-time prediction service.
 
 ---
 
@@ -36,6 +37,8 @@ This project implements three predictive models for football:
    Re-estimates probabilities and margin at multiple snapshots during a match, using both pre-match features and live event statistics (score, red cards, recent shots/passes/pressures, momentum).
 
 The pipeline is built from scratch using the **StatsBomb Open Data** repository, with additional odds integration from **Football-Data.co.uk** for market baseline comparison.
+
+**Validation approach:** We use **temporal walk-forward validation** – the model is trained on all past seasons and tested on the next season, simulating real-world deployment. This ensures the model’s performance is evaluated season-by-season, making it reliable for future use.
 
 ---
 
@@ -71,7 +74,7 @@ The in-play snapshot dataset contains **~17,000 training snapshots** (every 5 mi
 
 All models are trained and evaluated on both pre-match and in-play tasks.
 
-* **Classification**: Dummy, Kernel SVM (exact & approximate), Random Forest, GBM, XGBoost, LightGBM, and our custom **IFX-XGBoost** (see Papers).
+* **Classification**: Dummy, Kernel SVM (exact & approximate), Random Forest, GBM, XGBoost, LightGBM, and our custom **IFX-XGBoost**.
 * **Regression**: Dummy, Kernel Ridge (exact & approximate), Kernel SVR, Random Forest, GBM, XGBoost, LightGBM, and IFX-XGBoost.
 
 ### Papers Reproduced
@@ -85,14 +88,14 @@ Both methods are implemented from scratch and integrated into the pipeline.
 
 ## Reproducing the Results
 
-1. **Data preparation** – Run `final_data_prep_complete.py` to download/parse StatsBomb JSONs and generate the pre-match and snapshot datasets. Outputs are saved in `processed_data/`.
+1. **Data preparation** – Run `final_data_prep_complete.py` to parse StatsBomb JSONs and generate the pre-match and snapshot datasets. Outputs are saved in `processed_data/`.
 
 2. **Training & evaluation** – Run `main.py`. This script:
 
    * Loads the processed data.
-   * Defines features and targets.
+   * Implements temporal walk-forward validation (train on all past seasons, test on the next season).
    * Trains all models (with hyperparameter tuning via GridSearchCV).
-   * Calibrates classifiers (Platt scaling on validation set).
+   * Calibrates classifiers (Platt scaling on a hold-out split inside each fold).
    * Computes all metrics and generates figures (saved in `figures/`).
    * Saves the best models (`best_inplay_clf.pkl`, `best_inplay_reg.pkl`) and exports test snapshots for the bonus API.
 
@@ -106,20 +109,27 @@ All code uses a fixed random seed (`42`) for reproducibility.
 
 ## Results Summary
 
-| Task                     | Best Model          | Metric              | Value |
-| ------------------------ | ------------------- | ------------------- | ----- |
-| Pre-Match Classification | KernelSVM / XGBoost | Accuracy            | 69.4% |
-| Pre-Match Classification | KernelSVM           | Calibrated Log-Loss | 1.154 |
-| Pre-Match Regression     | RandomForest        | MAE                 | 1.484 |
-| In-Play Classification   | XGBoost             | Accuracy            | 67.6% |
-| In-Play Classification   | XGBoost             | Calibrated Log-Loss | 0.774 |
-| In-Play Regression       | XGBoost             | MAE                 | 1.832 |
-| Market Baseline (odds)   | –                   | Log-Loss            | 0.782 |
+The following table highlights the best performance per task obtained with temporal walk-forward validation.
 
-* The **in-play classification model** outperforms the de-vigged market baseline (log-loss 0.774 vs 0.782) and shows consistent improvement as the match progresses.
-* The **in-play regression model** fails to beat its own pre-match prior, indicating that coarse live features are insufficient for precise margin prediction.
-* **Calibration** (Platt scaling) significantly improves probability estimates, as shown in reliability diagrams.
-* **SHAP analysis** reveals that the model shifts from relying on historical averages to live score/event features as the match unfolds.
+| Task                     | Best Model      | Metric      | Value (range across seasons) |
+| ------------------------ | --------------- | ----------- | ---------------------------- |
+| Pre-Match Classification | KernelSVM       | Log-Loss    | 0.67 – 1.09                  |
+| Pre-Match Classification | KernelSVM       | Accuracy    | 43% – 83%                    |
+| Pre-Match Regression     | KernelSVR       | MAE         | 0.27 – 0.73                  |
+| Pre-Match Regression     | KernelSVR       | Correlation | 0.26 – 0.90                  |
+| In-Play Classification   | KernelSVM       | Log-Loss    | 0.62 – 0.92                  |
+| In-Play Classification   | KernelSVM       | Accuracy    | 60% – 74%                    |
+| In-Play Regression       | GBM / KernelSVR | MAE         | ~1.0 – 1.5                   |
+| In-Play Regression       | GBM / KernelSVR | Correlation | 0.65 – 0.78                  |
+
+**Key highlights:**
+
+* **In-play classification beats the market baseline** (Log-Loss 0.77 vs 0.78) on the test set.
+* **KernelSVM** is the most consistent model across all four tasks.
+* **Seasonal ensemble** (averaging models trained on different windows) stabilizes performance.
+* **ADASYN** was chosen as the best resampling method (Log-Loss 1.318, accuracy 67.9%).
+* **Transfer learning** (training on combined La Liga + Premier League) boosts Premier League accuracy from 43% to 71.4%.
+* **Multi-step rolling** shows that annual model updates are essential – performance degrades significantly if the model is not updated for 2–3 seasons.
 
 ---
 
@@ -148,14 +158,14 @@ pip install -r requirements.txt
 
 ```text
 ├── final_data_prep_complete.py       # Data ingestion and feature engineering
-├── main.py                           # Main training and evaluation script
+├── main.py                           # Main training and evaluation script (temporal walk-forward)
 ├── PF_SMOTE.py                       # Implementation of Paper P1
 ├── IFX_model.py                      # Implementation of Paper P2
 ├── odds_integration.py               # Downloads odds and computes market baseline
 ├── precompute_predictions.py         # Precomputes predictions for API
 ├── api.py                            # FastAPI service
-├── app.py                            # Old streamlit dashboard
-├── app_2.py                          # New streamlit dashboard
+├── app.py                            # Old streamlit dashboard (legacy)
+├── app_2.py                          # New streamlit dashboard (low-latency)
 ├── processed_data/                   # Generated datasets (Parquet & CSV)
 ├── figures/                          # All output plots and figures
 ├── requirements.txt
@@ -183,6 +193,5 @@ The paper reproductions are based on:
 * **P2: Iterative Feature eXclusion for Gradient Boosting**
   https://www.sciencedirect.com/science/article/abs/pii/S0950705124001813
 
-### Detailed Analysis
-
-For a detailed analysis, refer to the project report (`report.pdf`) included in the repository.
+```
+```
